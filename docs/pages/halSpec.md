@@ -4,8 +4,8 @@
 
 | Date | Comment | Version |
 | --- | --- | --- |
-| 08/24/26 | Rewritten against the canonical HAL specification topic set. Page renamed from `MoCAHalSpec.md` to `halSpec.md`. Added `Version History`, `Optional Components`, `Data Structures and Defines`, `API Surface` and `State Diagram`; documented the asynchronous notification callback against the header for the first time; corrected the API narrative so that every named identifier is one the header declares. | 1.0.1 |
-| 07/29/24 | Initial release of the MoCA HAL interface definition — `RDKB-52502` MoCA HAL header migration to GitHub, `moca_hal.h` update, and refinement following MTA HAL review comments. | 1.0.0 |
+| 2024-07-29 | Initial release of the MoCA HAL interface definition — `RDKB-52502` MoCA HAL header migration to GitHub, `moca_hal.h` update, and refinement following MTA HAL review comments. | 1.0.0 |
+| 2026-08-24 | Rewritten against the canonical HAL specification topic set. Page renamed from `MoCAHalSpec.md` to `halSpec.md`. Added `Version History`, `Optional Components`, `Data Structures and Defines`, `API Surface` and `State Diagram`; documented the asynchronous notification callback against the header for the first time; corrected the API narrative so that every named identifier is one the header declares. | 1.0.1 |
 
 Four different version identities apply to this repository and are deliberately kept apart, because
 a caller needs a different one in each case.
@@ -14,10 +14,10 @@ a caller needs a different one in each case.
 | --- | --- | --- |
 | Document revision | `1.0.1` | The revision of this specification, as recorded in the table above. |
 | Interface version | Not declared | `moca_hal.h` defines **no** interface version macro. The `FirmwareVersion`, `HighestVersion` and `CurrentVersion` members it does declare report the vendor firmware and the MoCA **protocol** version of a node — they are not a version of this interface, and a caller cannot use them to determine which revision of the header a platform was built against. This interface offers no compile-time or run-time version check. |
-| Release tag | `1.0.0` | The repository's only git tag, dated 29 July 2024, matching the single section in the changelog. This is the release this document describes. |
+| Release tag | `1.0.0` | The repository's only git tag, dated 2024-07-29, matching the single section in the changelog. This is the release this document describes. |
 | Generated-site version string | `<tag>-<commits since that tag>-g<abbreviated commit>` | The output of `git describe --tags`, which `docs/generate_docs.sh` passes to the documentation generator as `PROJECT_VERSION`. Whenever the tree is ahead of a tag it takes the form shown — here the `1.0.0` tag plus however many commits have been made since it. That string identifies a position in history, not a version of this interface or of this document, and must not be read as one. No literal value is quoted, because the string changes with every commit. |
 
-**Provenance of this page.** It was renamed from `docs/pages/MoCAHalSpec.md` to `docs/pages/halSpec.md` in the same change that rewrote it against the canonical topic set. Git records a rename only where the two versions still resemble each other, and a full rewrite does not, so `git log --follow -- docs/pages/halSpec.md` begins at that change: the revisions before it are reached with `git log -- docs/pages/MoCAHalSpec.md`.
+**Provenance of this page.** It was renamed from `docs/pages/MoCAHalSpec.md` to `docs/pages/halSpec.md` in the same change that rewrote it against the canonical topic set. Git records a rename only where the two versions still resemble each other, and a full rewrite does not, so `git log --follow -- docs/pages/halSpec.md` begins at that change: the revisions before it are reached with `git log -- docs/pages/MoCAHalSpec.md`. That resemblance is measured, and the threshold is 50% by default, so lowering it to git's floor \- `git log --follow -M1% -- docs/pages/halSpec.md` \- is worth trying first: where it pairs the two paths it shows both stretches of history in one listing, and where the rewrite kept too little of the original for git to pair them at any threshold the second command above remains the only route to the earlier revisions.
 
 *Derived from `CHANGELOG.md`, the repository's git tags, `docs/generate_docs.sh`:26,
 and `include/moca_hal.h`:362, :364, :397.*
