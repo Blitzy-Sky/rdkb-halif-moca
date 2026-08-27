@@ -211,7 +211,7 @@
  * progress" from "the call failed" by inspecting the return value alone, and must read
  * moca_getIfAcaStatus() and the stat member of moca_aca_stat_t instead. The colliding
  * values, and what a caller does about them, are set out under `Internal Error Handling`
- * in the repository specification (`docs/pages/halSpec.md`).
+ * in the repository specification.
  */
 
 /**********************************************************************
@@ -232,7 +232,7 @@
  * member may hold and nothing more: this interface states no legal transition, no ordering
  * between the states and no event that causes a change, so a caller reads the current value
  * and must not infer a sequence from it. `State Diagram` in the repository specification
- * (`docs/pages/halSpec.md`) records the same position.
+ * in the HAL specification records the same position.
  *
  * @note This type exists only where the `MOCA_VAR` macro is **not** defined, as does
  *       `moca_dynamic_info_t`, the only structure that uses it. See the warning on that
@@ -354,12 +354,12 @@ typedef struct
  *          `MOCA_VAR` variant of this header is ill-formed, so a caller cannot use this
  *          type, or any other declaration this header makes, from a translation unit that
  *          defines `MOCA_VAR`. `Platform or Product Customization` in the repository
- *          specification (`docs/pages/halSpec.md`) states the same limitation.
+ *          specification states the same limitation.
  * @see moca_IfGetDynamicInfo
  */
 typedef struct
 {
-    moca_if_status_t Status;             /*!< Operational state of the local interface, as one of the seven moca_if_status_t enumerators, whose values run from 1 to 7 - so 0 is not a defined state and no enumerator stands for "not yet read". **This interface does not state which transitions are legal or in what order they occur**, so a caller reads the current value and must not infer a sequence from it; `State Diagram` in the repository specification (`docs/pages/halSpec.md`) records the same. IF_STATUS_Unknown is the only value that stands for absent information. */
+    moca_if_status_t Status;             /*!< Operational state of the local interface, as one of the seven moca_if_status_t enumerators, whose values run from 1 to 7 - so 0 is not a defined state and no enumerator stands for "not yet read". **This interface does not state which transitions are legal or in what order they occur**, so a caller reads the current value and must not infer a sequence from it; `State Diagram` in the repository specification records the same. IF_STATUS_Unknown is the only value that stands for absent information. */
     ULONG LastChange;                   /*!< Time at which the link status last changed, in seconds since the epoch. ULONG is unsigned long, so the value is representable from 0 to at least (2^32)-1 and cannot be negative. This interface does not state which clock the value comes from, whether it survives a reboot, or what the member holds where the status has never changed, and it reserves no value for that case - so a caller must not difference it against its own clock until it has established the source with the vendor implementation. */
     ULONG MaxIngressBW;                 /*!< Highest ingress bandwidth the interface has seen, in bits per second. ULONG, so 0 to at least (2^32)-1. It is a high-water mark and not an instantaneous rate: this interface states neither the interval it covers nor any way to reset it, so a caller cannot tell how old the maximum is. MaxIngressBWThresholdReached below reports whether it has crossed the MaxIngressBWThreshold configured through moca_cfg_t. */
     ULONG MaxEgressBW;                  /*!< Highest egress bandwidth the interface has seen, in bits per second. ULONG, so 0 to at least (2^32)-1, a high-water mark with no stated interval and no stated reset, exactly as for MaxIngressBW. MaxEgressBWThresholdReached below reports whether it has crossed the MaxEgressBWThreshold configured through moca_cfg_t. */
@@ -662,7 +662,7 @@ typedef struct
  *
  * @pre None. This interface declares no initialization or teardown call, so registration
  *      may be performed at any point; `Initialization and Startup` in the repository
- *      specification (`docs/pages/halSpec.md`) places it before the first
+ *      specification places it before the first
  *      `moca_IfGetDynamicInfo()` in the normal bring-up order, but does not require it.
  * @post Not specified. **This function returns `void`, so it reports no outcome**: a caller
  *       cannot tell from it whether the handler was accepted, and this interface offers no
@@ -676,7 +676,7 @@ typedef struct
  * @note Blocking: this interface states nothing specific to this call - neither that it is
  *       cheap local bookkeeping, nor that it waits for anything. The only statement that
  *       bears on it is the module-wide non-blocking requirement in `Blocking calls` in the
- *       repository specification (`docs/pages/halSpec.md`), which covers every function here
+ *       repository specification, which covers every function here
  *       and which this declaration neither extends nor excepts.
  * @note Thread safety: this interface is not thread safe, and `Threading Model` in the
  *       repository specification places serialisation on the calling module. The delivery
@@ -720,7 +720,7 @@ void moca_associatedDevice_callback_register(moca_associatedDevice_callback call
  * than STATUS_SUCCESS as a failure of the class documented on the function, rather than
  * comparing against the currently defined codes and assuming an unrecognised value cannot
  * occur. `Internal Error Handling` in the repository specification
- * (`docs/pages/halSpec.md`) states the same rule and lists the two pairs of codes that
+ * in the HAL specification states the same rule and lists the two pairs of codes that
  * collide numerically.
  */
 
@@ -730,7 +730,7 @@ void moca_associatedDevice_callback_register(moca_associatedDevice_callback call
  *
  * Populates the caller's `moca_cfg_t` with the enable, privacy, power, bandwidth-threshold
  * and frequency-mask settings the interface is running with. `Initialization and Startup`
- * in the repository specification (`docs/pages/halSpec.md`) makes this the read half of
+ * in the repository specification makes this the read half of
  * the read-modify-write sequence a caller must use with `moca_SetIfConfig()`: because that
  * call takes the whole structure, a caller reads the configuration back first so that the
  * members it does not intend to change are preserved.
@@ -756,7 +756,7 @@ void moca_associatedDevice_callback_register(moca_associatedDevice_callback call
  * @pre This interface declares no initialization or teardown call, so it imposes no call
  *      ordering and opens no session; `moca_HardwareEquipped()` is the only readiness
  *      check available, as `Initialization and Startup` in the repository specification
- *      (`docs/pages/halSpec.md`) states. The pointer argument must address
+ *      in the HAL specification states. The pointer argument must address
  *      caller-allocated storage of the declared type. This interface does not state what
  *      an implementation does with a null pointer, so passing one is not covered by this
  *      contract and is not reported through a distinct return code.
@@ -800,7 +800,7 @@ INT moca_GetIfConfig(ULONG ifIndex, moca_cfg_t *pmoca_config);
  * caller has supplied. The call takes the **whole** structure rather than a delta, so
  * every member is applied and a member the caller did not deliberately set is applied with
  * whatever value it happens to hold. `Initialization and Startup` in the repository
- * specification (`docs/pages/halSpec.md`) therefore requires a caller to read the
+ * specification therefore requires a caller to read the
  * configuration with `moca_GetIfConfig()` first and modify the members it intends to
  * change.
  *
@@ -831,7 +831,7 @@ INT moca_GetIfConfig(ULONG ifIndex, moca_cfg_t *pmoca_config);
  * @pre This interface declares no initialization or teardown call, so it imposes no call
  *      ordering and opens no session; `moca_HardwareEquipped()` is the only readiness
  *      check available, as `Initialization and Startup` in the repository specification
- *      (`docs/pages/halSpec.md`) states. The pointer argument must address
+ *      in the HAL specification states. The pointer argument must address
  *      caller-allocated storage of the declared type. This interface does not state what
  *      an implementation does with a null pointer, so passing one is not covered by this
  *      contract and is not reported through a distinct return code.
@@ -893,7 +893,7 @@ INT moca_SetIfConfig(ULONG ifIndex, moca_cfg_t *pmoca_config);
  *                                the implementation fills in. It must be non-NULL. The
  *                                caller both allocates and releases the storage - the
  *                                `Memory Model` topic of the repository specification
- *                                (`docs/pages/halSpec.md`) places every output buffer on
+ *                                in the HAL specification places every output buffer on
  *                                the caller and states that this interface declares no
  *                                allocator and no matching release function. Nothing here
  *                                establishes that the implementation retains the pointer
@@ -910,7 +910,7 @@ INT moca_SetIfConfig(ULONG ifIndex, moca_cfg_t *pmoca_config);
  * @pre This interface declares no initialization or teardown call, so it imposes no call
  *      ordering and opens no session; `moca_HardwareEquipped()` is the only readiness
  *      check available, as `Initialization and Startup` in the repository specification
- *      (`docs/pages/halSpec.md`) states. The pointer argument must address
+ *      in the HAL specification states. The pointer argument must address
  *      caller-allocated storage of the declared type. This interface does not state what
  *      an implementation does with a null pointer, so passing one is not covered by this
  *      contract and is not reported through a distinct return code.
@@ -946,7 +946,7 @@ INT moca_SetIfConfig(ULONG ifIndex, moca_cfg_t *pmoca_config);
  *          header is ill-formed, and guarding the caller's own dynamic-information path
  *          under `#ifndef MOCA_VAR` does not avoid it, because the failure happens inside
  *          the header before any of the caller's code is seen. `Platform or Product
- *          Customization` in the repository specification (`docs/pages/halSpec.md`) states
+ *          Customization` in the repository specification states
  *          the same limitation.
  *
  * @see moca_dynamic_info_t
@@ -964,7 +964,7 @@ INT moca_IfGetDynamicInfo(ULONG ifIndex, moca_dynamic_info_t *pmoca_dynamic_info
  * the maximum PHY rate and highest supported MoCA version, the frequency capability and
  * network taboo masks, the beacon backoff and the QAM-256 and packet-aggregation capability
  * flags. `Initialization and Startup` in the repository specification
- * (`docs/pages/halSpec.md`) places this immediately after the `moca_HardwareEquipped()`
+ * in the HAL specification places this immediately after the `moca_HardwareEquipped()`
  * readiness check in a caller's normal bring-up order.
  *
  * @param[in] ifIndex Index of the MoCA interface to query.
@@ -991,7 +991,7 @@ INT moca_IfGetDynamicInfo(ULONG ifIndex, moca_dynamic_info_t *pmoca_dynamic_info
  * @pre This interface declares no initialization or teardown call, so it imposes no call
  *      ordering and opens no session; `moca_HardwareEquipped()` is the only readiness
  *      check available, as `Initialization and Startup` in the repository specification
- *      (`docs/pages/halSpec.md`) states. The pointer argument must address
+ *      in the HAL specification states. The pointer argument must address
  *      caller-allocated storage of the declared type. This interface does not state what
  *      an implementation does with a null pointer, so passing one is not covered by this
  *      contract and is not reported through a distinct return code.
@@ -1052,14 +1052,14 @@ INT moca_IfGetStaticInfo(ULONG ifIndex, moca_static_info_t *pmoca_static_info);
  *                         computing a rate must tolerate a value smaller than the previous
  *                         reading rather than assuming monotonic growth. The caller both
  *                         allocates and releases the storage, per the `Memory Model` topic
- *                         of the repository specification (`docs/pages/halSpec.md`);
+ *                         of the repository specification;
  *                         nothing here establishes that the implementation retains the
  *                         pointer beyond the call.
  *
  * @pre This interface declares no initialization or teardown call, so it imposes no call
  *      ordering and opens no session; `moca_HardwareEquipped()` is the only readiness
  *      check available, as `Initialization and Startup` in the repository specification
- *      (`docs/pages/halSpec.md`) states. The pointer argument must address
+ *      in the HAL specification states. The pointer argument must address
  *      caller-allocated storage of the declared type. This interface does not state what
  *      an implementation does with a null pointer, so passing one is not covered by this
  *      contract and is not reported through a distinct return code.
@@ -1100,7 +1100,7 @@ INT moca_IfGetStats(ULONG ifIndex, moca_stats_t *pmoca_stats);
  * pointer. This is the count a caller needs before walking the device records with
  * `moca_GetAssociatedDevices()`, which reports no count of its own, and the reconciliation
  * point that `Asynchronous Notification Model` in the repository specification
- * (`docs/pages/halSpec.md`) directs a caller to instead of treating the notification stream
+ * in the HAL specification directs a caller to instead of treating the notification stream
  * as authoritative.
  *
  * @param[in] ifIndex Index of the MoCA interface to query.
@@ -1124,7 +1124,7 @@ INT moca_IfGetStats(ULONG ifIndex, moca_stats_t *pmoca_stats);
  * @pre This interface declares no initialization or teardown call, so it imposes no call
  *      ordering and opens no session; `moca_HardwareEquipped()` is the only readiness
  *      check available, as `Initialization and Startup` in the repository specification
- *      (`docs/pages/halSpec.md`) states. The pointer argument must address
+ *      in the HAL specification states. The pointer argument must address
  *      caller-allocated storage of the declared type. This interface does not state what
  *      an implementation does with a null pointer, so passing one is not covered by this
  *      contract and is not reported through a distinct return code.
@@ -1186,13 +1186,13 @@ INT moca_GetNumAssociatedDevices(ULONG ifIndex, ULONG *pulCount);
  *                                must tolerate a value smaller than the previous reading.
  *                                The caller both allocates and releases the storage, per
  *                                the `Memory Model` topic of the repository specification
- *                                (`docs/pages/halSpec.md`); nothing here establishes that
+ *                                in the HAL specification; nothing here establishes that
  *                                the implementation retains the pointer beyond the call.
  *
  * @pre This interface declares no initialization or teardown call, so it imposes no call
  *      ordering and opens no session; `moca_HardwareEquipped()` is the only readiness
  *      check available, as `Initialization and Startup` in the repository specification
- *      (`docs/pages/halSpec.md`) states. The pointer argument must address
+ *      in the HAL specification states. The pointer argument must address
  *      caller-allocated storage of the declared type. This interface does not state what
  *      an implementation does with a null pointer, so passing one is not covered by this
  *      contract and is not reported through a distinct return code.
@@ -1249,14 +1249,14 @@ INT moca_IfGetExtCounter(ULONG ifIndex, moca_mac_counters_t *pmoca_mac_counters)
  *                                    maximum, or over what interval it accumulates.** The
  *                                    caller both allocates and releases the storage, per
  *                                    the `Memory Model` topic of the repository
- *                                    specification (`docs/pages/halSpec.md`); nothing here
+ *                                    specification; nothing here
  *                                    establishes that the implementation retains the
  *                                    pointer beyond the call.
  *
  * @pre This interface declares no initialization or teardown call, so it imposes no call
  *      ordering and opens no session; `moca_HardwareEquipped()` is the only readiness
  *      check available, as `Initialization and Startup` in the repository specification
- *      (`docs/pages/halSpec.md`) states. The pointer argument must address
+ *      in the HAL specification states. The pointer argument must address
  *      caller-allocated storage of the declared type. This interface does not state what
  *      an implementation does with a null pointer, so passing one is not covered by this
  *      contract and is not reported through a distinct return code.
@@ -1312,7 +1312,7 @@ INT moca_IfGetExtAggrCounter(ULONG ifIndex, moca_aggregate_counters_t *pmoca_agg
  *                  the end of the array. Each entry's `mac_addr` member is six raw
  *                  address octets, not text. The caller allocates and releases this
  *                  storage - the `Memory Model` topic of the repository specification
- *                  (`docs/pages/halSpec.md`) places every output buffer on the caller
+ *                  in the HAL specification places every output buffer on the caller
  *                  and states that the interface declares no allocator and no matching
  *                  release function. This interface does not specify whether the
  *                  implementation retains the pointer beyond the call, so the caller
@@ -1373,7 +1373,7 @@ INT moca_GetMocaCPEs(ULONG ifIndex, moca_cpe_t *cpes, INT *pnum_cpes);
  * interface, carrying each node's MAC address, node ID, `PHY` transmit and receive
  * rates, power levels, packet counters and capability flags. It is the detailed
  * counterpart of `moca_GetMocaCPEs`, and the reconciliation point that `Asynchronous
- * Notification Model` in the repository specification (`docs/pages/halSpec.md`) directs
+ * Notification Model` in the repository specification directs
  * a caller to when the notification stream cannot be treated as authoritative.
  *
  * @param[in] ifIndex Index of the MoCA interface to query. `moca_cfg_t.InstanceNumber`
@@ -1462,7 +1462,7 @@ INT moca_GetAssociatedDevices(ULONG ifIndex, moca_associated_device_t **ppdevice
  * arrays - `FreqCurrentMaskSetting`, `NodeTabooMask` and `ChannelScanMask` in `moca_cfg_t`,
  * `FreqCapabilityMask` and `NetworkTabooMask` in `moca_static_info_t`, and `FreqCurrentMask`
  * in `moca_dynamic_info_t`. It reads no hardware state. `Initialization and Startup` in the
- * repository specification (`docs/pages/halSpec.md`) lists it among the routine monitoring
+ * repository specification lists it among the routine monitoring
  * and mask interpretation calls.
  *
  * @param[in] mask Pointer to a caller-owned array of `UCHAR` holding the frequency mask.
@@ -1516,7 +1516,7 @@ INT moca_FreqMaskToValue(UCHAR *mask);
  * This is the readiness check a caller makes before anything else. Because this interface
  * declares no initialization call and no return code meaning "not initialized yet", it is
  * the only readiness signal available - `Initialization and Startup` in the repository
- * specification (`docs/pages/halSpec.md`) puts it first in a caller's normal bring-up
+ * specification puts it first in a caller's normal bring-up
  * order, ahead of `moca_IfGetStaticInfo()`.
  *
  * @pre None. It takes no argument, requires no prior call, and is the one call in this
@@ -1578,7 +1578,7 @@ BOOL moca_HardwareEquipped(void);
  *                          capacity, so an undersized array admits a write past its end.
  *                          The caller allocates and releases this storage - the `Memory
  *                          Model` topic of the repository specification
- *                          (`docs/pages/halSpec.md`) places every output buffer on the
+ *                          in the HAL specification places every output buffer on the
  *                          caller and states that the interface declares no allocator and
  *                          no matching release function. Nothing here establishes that
  *                          the implementation retains the pointer beyond the call.
@@ -1654,7 +1654,7 @@ INT moca_GetFullMeshRates(ULONG ifIndex, moca_mesh_table_t *pDeviceArray, ULONG 
  *                          caller no bound to enforce and no in-parameter with which to
  *                          declare one. The caller allocates and releases the storage -
  *                          the `Memory Model` topic of the repository specification
- *                          (`docs/pages/halSpec.md`) places every output buffer on the
+ *                          in the HAL specification places every output buffer on the
  *                          caller and states that the interface declares no allocator and
  *                          no matching release function.
  * @param[out] pulCount Pointer to a caller-allocated `ULONG` that receives the number of
@@ -1757,7 +1757,7 @@ INT moca_GetResetCount(ULONG *resetcnt);
  * best operating channel for the MoCA network can be selected. The run is long-running but
  * this call is not: it returns once the run has been started, and the caller learns of
  * completion by polling `moca_getIfAcaStatus()`. `Blocking calls` in the repository
- * specification (`docs/pages/halSpec.md`) states this explicitly, and `State Diagram` gives
+ * specification states this explicitly, and `State Diagram` gives
  * the resulting idle - running - completed cycle.
  *
  * @param[in] interfaceIndex Index of the MoCA interface on which to run ACA. The ACA calls
@@ -1841,7 +1841,7 @@ int moca_setIfAcaConfig(int interfaceIndex, moca_aca_cfg_t acaCfg);
  * Populates the caller's `moca_aca_cfg_t` with the parameters a previous
  * `moca_setIfAcaConfig()` recorded. It reads configuration only and changes nothing, so it
  * may be called in any ACA state - idle, running or completed - which is why `State Diagram`
- * in the repository specification (`docs/pages/halSpec.md`) places it on no transition.
+ * in the repository specification places it on no transition.
  *
  * @param[in] interfaceIndex Index of the MoCA interface to query. The ACA calls take an
  *                           `int` index rather than the `ULONG` the read calls take; this
@@ -1900,7 +1900,7 @@ int moca_getIfAcaConfig(int interfaceIndex, moca_aca_cfg_t *acaCfg);
  * is active it has no effect and still reports success, so a caller may use it
  * unconditionally to clear the way for a `moca_setIfAcaConfig()` that would otherwise be
  * refused with `STATUS_INPROGRESS`. `State Diagram` in the repository specification
- * (`docs/pages/halSpec.md`) shows it as the running-to-idle transition.
+ * in the HAL specification shows it as the running-to-idle transition.
  *
  * @param[in] interfaceIndex Index of the MoCA interface whose ACA run is to be cancelled.
  *                           The ACA calls take an `int` index rather than the `ULONG` the
@@ -2048,7 +2048,7 @@ int moca_getIfAcaStatus(int interfaceIndex,moca_aca_stat_t *pacaStat);
  *                         it allocates it and sets `*ppscmodStat` to point at it before
  *                         the call, and it releases it afterwards. The `Memory Model`
  *                         topic of the repository specification
- *                         (`docs/pages/halSpec.md`) states this for both
+ *                         in the HAL specification states this for both
  *                         pointer-to-pointer outputs in this interface, and states that
  *                         no function returns allocated storage the caller must free and
  *                         that the interface declares no allocator and no matching

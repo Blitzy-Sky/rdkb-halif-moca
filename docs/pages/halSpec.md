@@ -5,7 +5,7 @@
 | Date | Comment | Version |
 | --- | --- | --- |
 | 2024-07-29 | Initial release of the MoCA HAL interface definition — `RDKB-52502` MoCA HAL header migration to GitHub, `moca_hal.h` update, and refinement following MTA HAL review comments. | 1.0.0 |
-| 2026-08-24 | Rewritten against the canonical HAL specification topic set. Page renamed from `MoCAHalSpec.md` to `halSpec.md`. Added `Version History`, `Optional Components`, `Data Structures and Defines`, `API Surface` and `State Diagram`; documented the asynchronous notification callback against the header for the first time; corrected the API narrative so that every named identifier is one the header declares. | 1.0.1 |
+| 2026-08-24 | Rewritten against the canonical HAL specification topic set. Page renamed from `MoCAHalSpec.md` to [halSpec.md](halSpec.md). Added `Version History`, `Optional Components`, `Data Structures and Defines`, `API Surface` and `State Diagram`; documented the asynchronous notification callback against the header for the first time; corrected the API narrative so that every named identifier is one the header declares. | 1.0.1 |
 
 Four different version identities apply to this repository and are deliberately kept apart, because
 a caller needs a different one in each case.
@@ -17,9 +17,17 @@ a caller needs a different one in each case.
 | Release tag | `1.0.0` | The repository's only git tag, dated 2024-07-29, matching the single section in the changelog. This is the release this document describes. |
 | Generated-site version string | `<tag>-<commits since that tag>-g<abbreviated commit>` | The output of `git describe --tags`, which `docs/generate_docs.sh` passes to the documentation generator as `PROJECT_VERSION`. Whenever the tree is ahead of a tag it takes the form shown — here the `1.0.0` tag plus however many commits have been made since it. That string identifies a position in history, not a version of this interface or of this document, and must not be read as one. No literal value is quoted, because the string changes with every commit. |
 
-**Provenance of this page.** It was renamed from `docs/pages/MoCAHalSpec.md` to `docs/pages/halSpec.md` in the same change that rewrote it against the canonical topic set. Git records a rename only where the two versions still resemble each other, and a full rewrite does not, so `git log --follow -- docs/pages/halSpec.md` begins at that change: the revisions before it are reached with `git log -- docs/pages/MoCAHalSpec.md`. That resemblance is measured, and the threshold is 50% by default, so lowering it to git's floor \- `git log --follow -M1% -- docs/pages/halSpec.md` \- is worth trying first: where it pairs the two paths it shows both stretches of history in one listing, and where the rewrite kept too little of the original for git to pair them at any threshold the second command above remains the only route to the earlier revisions.
+**Provenance of this page.** It was renamed from `docs/pages/MoCAHalSpec.md` to the canonical `docs/pages/` specification page in the same change that rewrote it against the canonical topic set. Git records a rename only where the two versions still resemble each other, and a full rewrite does not, so a `--follow` listing of the canonical path begins at that change, and the revisions before it are reached by listing the legacy path instead:
 
-*Derived from `CHANGELOG.md`, the repository's git tags, `docs/generate_docs.sh`:26,
+```sh
+git log --follow -- docs/pages/halSpec.md
+git log --follow -M1% -- docs/pages/halSpec.md
+git log -- docs/pages/MoCAHalSpec.md
+```
+
+That resemblance is measured, and the threshold is 50% by default, so lowering it to git's floor with the second command above is worth trying first: where it pairs the two paths it shows both stretches of history in one listing, and where the rewrite kept too little of the original for git to pair them at any threshold the third command remains the only route to the earlier revisions.
+
+*Derived from the repository-root changelog, the repository's git tags, `docs/generate_docs.sh`:26,
 and `include/moca_hal.h`:362, :364, :397.*
 
 ## Acronyms
@@ -73,7 +81,7 @@ For a caller, the interface covers five things:
   full mesh `PHY` rate table, and the module reset count.
 - **Associated devices** — enumerate the nodes on the MoCA network, and receive an asynchronous
   notification when one joins or leaves.
-- **`ACA`** — configure, start, cancel and read back an Automatic Channel Adaptation run, plus the
+- `ACA` — configure, start, cancel and read back an Automatic Channel Adaptation run, plus the
   `SCMOD` statistics it produces.
 
 **How to read this document.** `Description` and `Component Runtime Execution Requirements` answer
@@ -91,7 +99,7 @@ enumeration.*
 
 The following parts of the interface are optional; the rest of it is not.
 
-- **`moca_GetFullMeshRates` and the mesh `PHY` rate table.** This function and the
+- `moca_GetFullMeshRates` **and the mesh `PHY` rate table.** This function and the
   `moca_mesh_table_t` structure it fills are compiled only when `MOCA_VAR` is **not** defined, as are
   `moca_if_status_t` and `moca_dynamic_info_t`. A build that defines `MOCA_VAR` exposes a smaller
   interface. See "Platform or Product Customization" for the
@@ -150,8 +158,8 @@ Third party vendors will implement appropriately to meet operational requirement
 Before the vendor's MoCA subsystem is ready, a call may not return promptly; see "Blocking calls",
 which states what is and is not specified about that window.
 
-*Derived from `include/moca_hal.h`:723-1478 (the complete declaration set, which contains no
-lifecycle call) and :1531-1554 (`moca_HardwareEquipped`).*
+<em>Derived from `include/moca_hal.h`:723-1478 (the complete declaration set, which contains no
+lifecycle call) and :1531-1554 (`moca_HardwareEquipped`).</em>
 
 ### Threading Model
 
@@ -261,12 +269,12 @@ no allocator and no matching release function.
 states a maximum resident size, heap budget or allocation count for an implementation. A caller
 cannot rely on a bound, and an implementer is not held to one by this specification.
 
-*Derived from `include/moca_hal.h`:1028-1029, :1064-1066, :1171-1172 and :1450-1452 (the per-function
+<em>Derived from `include/moca_hal.h`:1028-1029, :1064-1066, :1171-1172 and :1450-1452 (the per-function
 ownership and sizing statements); from the per-parameter retention statements at :736-739, :830-832,
 :869-871, :903-905, :968-970, :997-999, :1030-1033, :1174-1176, :1213-1214, :1339-1341 and
 :1407-1409, the non-`const` input caveats at :781-785 and :1104-1108 with :1115-1117, the by-value
 parameter at :1283-1285, and the on-failure statements at :938-939 and :1249-1254; and from the
-memory model stated by the predecessor of this page.*
+memory model stated by the predecessor of this page.</em>
 
 ### Power Management Requirements
 
@@ -554,18 +562,18 @@ Doxygen parameters — obliges a review of "Variability Management", which recor
 asks the documentation build to do and what the pinned generator actually does with it.
 
 This repository declares no `CODEOWNERS`, so the addressee of that obligation is the maintainer
-group that `CONTRIBUTING.md` directs contributions to: raise an issue, then open a pull request
-against this repository for team review.
+group that the repository's contribution guide directs contributions to: raise an issue, then open
+a pull request against this repository for team review.
 
 *Derived from the quality-control policy stated by the predecessor of this page, and from
-`CONTRIBUTING.md`.*
+the repository's contribution guide.*
 
 ### Licensing
 
 MoCA HAL implementation is expected to released under the Apache License 2.0
 
 The interface definition in this repository is itself licensed under Apache License 2.0; the full
-text is carried in `LICENSE.md` and the attribution notice in `NOTICE.md`.
+text is carried in [LICENSE.md](LICENSE.md) and the attribution notice in [NOTICE.md](NOTICE.md).
 
 *Derived from the licensing statement carried by the predecessor of this page and from the
 repository's own licence files.*
@@ -605,8 +613,8 @@ so despite this repository asking for the opposite.** The distinction matters to
 reads the generated site rather than the header, so it is stated here rather than left to be
 discovered.
 
-`docs/generate_docs.sh` passes `DOXYGEN_EXTRA_PARAMS="PREDEFINED='MOCA_VAR=0'"` to the documentation
-build, which reads as an intention to document the `MOCA_VAR`-defined variant. **That setting has no
+`docs/generate_docs.sh` passes ``DOXYGEN_EXTRA_PARAMS="PREDEFINED='MOCA_VAR=0'"`` to the
+documentation build, which reads as an intention to document the `MOCA_VAR`-defined variant. **That setting has no
 effect at the generator version this repository pins.** `docs/generate_docs.sh` pins the generator
 at
 `1.2.0`, and at that version neither the generator's `Makefile` nor its Doxygen configuration
@@ -627,6 +635,13 @@ structures and enumerations, so it describes a **larger** interface than a build
 defines `MOCA_VAR`, would find four documented symbols missing at compile time with nothing in the
 generated page to explain why. This page therefore marks all four as conditional at every mention,
 and "Platform or Product Customization" states what a `MOCA_VAR` build loses.
+
+The general rule a reader can rely on is that the generated API reference reflects the macros the
+documentation build itself defines — which, under the pinned generator, is none, `MOCA_VAR`
+included — and not the macros a product defines. A symbol's presence in the generated reference is
+therefore not evidence that a given build declares it, and a symbol's absence is not evidence that
+it does not: `include/moca_hal.h` and the conditional markings on this page are what establish the
+surface a particular build has.
 
 *Derived from `docs/generate_docs.sh`:23 and :27, the pinned generator's `Makefile` and Doxygen
 configuration at tag `1.2.0`, `include/moca_hal.h`:238, :374, :528, :1161 and :1192, and the
@@ -670,7 +685,7 @@ inventory carried by the predecessor of this page.*
 
 ## Interface API Documentation
 
-The [`moca_hal.h`](../../include/moca_hal.h) header file provides a complete reference for all HAL
+The `moca_hal.h` header file provides a complete reference for all HAL
 function prototypes and data type definitions. Each declaration carries a Doxygen block giving its
 per-parameter direction, valid ranges, pre-conditions and the return codes it can produce; that
 block is the authority for the detail this page indexes rather than repeats.
@@ -736,7 +751,7 @@ Diagram".
   `moca_GetAssociatedDevices` so that the caller can size the array it must supply, and
   `moca_GetMocaCPEs` requires an array pre-allocated for `kMoca_MaxCpeList` (256) entries.
 
-- **`ACA` ordering:** `moca_setIfAcaConfig` must precede `moca_getIfAcaStatus` and `moca_getIfScmod`,
+- `ACA` ordering: `moca_setIfAcaConfig` must precede `moca_getIfAcaStatus` and `moca_getIfScmod`,
   because both report on a run that the former configures or starts — the polling call states that a
   run must have been configured or started for its result to be meaningful (`moca_hal.h`:2039-2039),
   and the statistics call that a run must have completed (:1459-1460). That is a call-ordering rule,
@@ -753,7 +768,7 @@ Diagram".
   different information depending on the current state of the MoCA interface (Up, Down, Dormant,
   etc.).
 
-- **`ACA` Process:** Functions like `moca_setIfAcaConfig`, `moca_getIfAcaConfig` and
+- `ACA` Process: Functions like `moca_setIfAcaConfig`, `moca_getIfAcaConfig` and
   `moca_cancelIfAca` are specifically related to the Automatic Channel Adaptation (`ACA`) process.
   `moca_setIfAcaConfig` is the one function in this interface whose return value depends on current
   state: it returns `STATUS_INPROGRESS` when a run is already active instead of starting a new one
@@ -776,7 +791,7 @@ Diagram".
 
 ### Data Structures and Defines
 
-Every type below is declared in [`moca_hal.h`](../../include/moca_hal.h) under the
+Every type below is declared in `moca_hal.h` under the
 `MOCA_HAL_TYPES` Doxygen group, and the member-level meaning of each field is carried by the `/**< */`
 comment on the field itself. Line numbers are given so a caller can go straight to the declaration.
 
@@ -784,7 +799,7 @@ comment on the field itself. Line numbers are given so a caller can go straight 
 
 | Type | Declared at | What it represents |
 | --- | --- | --- |
-| `moca_if_status_t` | :250-259 | The seven possible states of a MoCA interface — `IF_STATUS_Up` (1), `IF_STATUS_Down` (2), `IF_STATUS_Unknown` (3), `IF_STATUS_Dormant` (4), `IF_STATUS_NotPresent` (5), `IF_STATUS_LowerLayerDown` (6) and `IF_STATUS_Error` (7). Reported through the `Status` member of `moca_dynamic_info_t`. **`MOCA_VAR`-conditional.** |
+| `moca_if_status_t` | :250-259 | The seven possible states of a MoCA interface — `IF_STATUS_Up` (1), `IF_STATUS_Down` (2), `IF_STATUS_Unknown` (3), `IF_STATUS_Dormant` (4), `IF_STATUS_NotPresent` (5), `IF_STATUS_LowerLayerDown` (6) and `IF_STATUS_Error` (7). Reported through the `Status` member of `moca_dynamic_info_t`. `MOCA_VAR`-conditional. |
 | `PROBE_TYPE` | :611-618 | The probe an `ACA` run uses — `PROBE_QUITE` (0), a quiet probe that transmits no signal, or `PROBE_EVM` (1), which transmits a signal to measure quality as `EVM`. Supplied in the `Type` member of `moca_aca_cfg_t`. |
 
 The header also contains a third enumeration, `ACA_STATUS`, which is **excluded from compilation** —
@@ -801,13 +816,13 @@ values are the four `STATUS_*` macros listed further down and the `stat` member 
 | --- | --- | --- |
 | `moca_cfg_t` | :315-342 | The writable configuration of an interface: alias, enable and privacy flags, preferred-`NC` flag, frequency and taboo masks, passphrase, transmit and beacon power limits, bandwidth thresholds, mixed mode, channel scanning and the reset flag. Exchanged by `moca_GetIfConfig` and `moca_SetIfConfig`. |
 | `moca_static_info_t` | :337-351 | Properties fixed for the life of the interface: name, MAC address, firmware version, maximum bit rate, highest supported MoCA version, frequency capability and network taboo masks, and the `QAM256` and packet-aggregation capability flags. |
-| `moca_dynamic_info_t` | :391-411 | Live interface and network state: status, last change, ingress and egress bandwidth maxima and their threshold flags, current MoCA version, `NC` and backup `NC` node IDs, local node ID, current and last operating frequency, connected client count, `NC` MAC address and link uptime. **`MOCA_VAR`-conditional.** |
+| `moca_dynamic_info_t` | :391-411 | Live interface and network state: status, last change, ingress and egress bandwidth maxima and their threshold flags, current MoCA version, `NC` and backup `NC` node IDs, local node ID, current and last operating frequency, connected client count, `NC` MAC address and link uptime. `MOCA_VAR`-conditional. |
 | `moca_stats_t` | :423-442 | Network-layer counters: bytes and packets sent and received, errors, discards, and the unicast, multicast, broadcast and unknown-protocol splits. |
 | `moca_mac_counters_t` | :441-449 | MAC-layer packet counters: MAP, reservation request, link control, admission request, probe and asynchronous beacon packets received. |
 | `moca_aggregate_counters_t` | :460-464 | Aggregate transmitted and received payload data unit counts, excluding MoCA control packets. |
 | `moca_cpe_t` | :469-472 | One `CPE` node, carrying its MAC address. Returned as an array by `moca_GetMocaCPEs`. |
 | `moca_associated_device_t` | :477-498 | One node on the MoCA network: MAC address, node ID, preferred-`NC` flag, highest MoCA version, transmit and receive `PHY` rates, broadcast rates, power levels and reduction, packet and error counts, capability flags, receive signal-to-noise ratio, client count, and the `Active` flag that the notification callback uses to signal a join or a leave. |
-| `moca_mesh_table_t` | :506-513 | One entry of the mesh `PHY` rate table: the receiving and transmitting node IDs and the transmit rate between them, plus the MoCA 2.x NPER and VLPER rates. **`MOCA_VAR`-conditional.** |
+| `moca_mesh_table_t` | :506-513 | One entry of the mesh `PHY` rate table: the receiving and transmitting node IDs and the transmit rate between them, plus the MoCA 2.x NPER and VLPER rates. `MOCA_VAR`-conditional. |
 | `moca_flow_table_t` | :521-533 | One ingress `PQoS` flow: flow ID, ingress and egress node IDs, remaining and initial lease time, destination MAC address, packet size, peak data rate, burst size and flow tag. |
 | `moca_assoc_pnc_info_t` | :587-592 | A node's preferred-`NC` information: node index, preferred-`NC` flag and the MoCA version the node supports. This structure is declared for callers that need it; no function in this interface takes or returns it. |
 | `moca_scmod_stat_t` | :597-606 | `SCMOD` statistics for one node pair: transmitting and receiving node IDs, the channel, and 512-element modulation, NPER and VLPER arrays. Returned as an array by `moca_getIfScmod`. |
@@ -848,7 +863,7 @@ definition. `BOOL` is an `unsigned char`, so a `BOOL` member must be compared ag
 All 21 declared functions are listed below by exact identifier, grouped by functional area. Per-API
 detail — argument direction, valid ranges, array sizing, pre-conditions and the full return-code
 list — is carried by the Doxygen block on each declaration in
-[`include/moca_hal.h`](../../include/moca_hal.h), under the `MOCA_HAL_APIS` group.
+[include/moca_hal.h](../../include/moca_hal.h), under the `MOCA_HAL_APIS` group.
 
 Three of the 21 do not return a status code, and mistaking them for status-returning calls is the
 easiest error to make against this interface: `moca_HardwareEquipped` returns a `BOOL`,
@@ -868,7 +883,7 @@ easiest error to make against this interface: `moca_HardwareEquipped` returns a 
 | API | Returns | Purpose |
 | --- | --- | --- |
 | `moca_IfGetStaticInfo` | `INT` status | Reads properties that do not change while the interface is up: name, MAC address, firmware version, maximum bit rate, highest supported MoCA version and capability masks. |
-| `moca_IfGetDynamicInfo` | `INT` status | Reads live interface and network state: link status, last change, operating frequency, `NC` identity, connected client count and link uptime. Its out-parameter type is **`MOCA_VAR`-conditional**, so this call is unusable in a build that defines `MOCA_VAR`. |
+| `moca_IfGetDynamicInfo` | `INT` status | Reads live interface and network state: link status, last change, operating frequency, `NC` identity, connected client count and link uptime. Its out-parameter type is `MOCA_VAR`-conditional, so this call is unusable in a build that defines `MOCA_VAR`. |
 
 **Statistics and counters:**
 
@@ -879,7 +894,7 @@ easiest error to make against this interface: `moca_HardwareEquipped` returns a 
 | `moca_IfGetExtAggrCounter` | `INT` status | Reads aggregate transmitted and received payload data unit counts, excluding MoCA control packets. |
 | `moca_GetFlowStatistics` | `INT` status | Reads the ingress `PQoS` flow table into a caller-allocated `moca_flow_table_t` array and reports the entry count. |
 | `moca_GetResetCount` | `INT` status | Reads how many times the MoCA module has been reset. The out-parameter is left unchanged if the call fails. |
-| `moca_GetFullMeshRates` | `INT` status | Reads the full mesh `PHY` rate table for every node pair. **`MOCA_VAR`-conditional** — absent from a build that defines `MOCA_VAR`. |
+| `moca_GetFullMeshRates` | `INT` status | Reads the full mesh `PHY` rate table for every node pair. `MOCA_VAR`-conditional — absent from a build that defines `MOCA_VAR`. |
 
 **Associated devices:**
 
@@ -889,7 +904,7 @@ easiest error to make against this interface: `moca_HardwareEquipped` returns a 
 | `moca_GetAssociatedDevices` | `INT` status | Reads a `moca_associated_device_t` record for every associated node — MAC address, node ID, `PHY` rates, power levels, capability flags and the `Active` flag. |
 | `moca_associatedDevice_callback_register` | `void` | Installs the callback invoked when a MoCA client is activated or deactivated. Reports no failure, and there is no matching de-registration call. |
 
-**`CPE` and utility:**
+`CPE` **and utility:**
 
 | API | Returns | Purpose |
 | --- | --- | --- |
@@ -897,7 +912,7 @@ easiest error to make against this interface: `moca_HardwareEquipped` returns a 
 | `moca_FreqMaskToValue` | `INT` frequency value | Converts a frequency bit mask to the corresponding frequency value. Returns the value itself, not a status. The mask interpretation and the valid output range are vendor-specific, and the input buffer should be at least 16 bytes. |
 | `moca_HardwareEquipped` | `BOOL` | Reports whether MoCA hardware is present and correctly configured. Returns `TRUE` or `FALSE`, not a status. This is the only readiness check in the interface. |
 
-**`ACA` — Automatic Channel Adaptation:**
+`ACA` — Automatic Channel Adaptation:
 
 | API | Returns | Purpose |
 | --- | --- | --- |
@@ -907,7 +922,7 @@ easiest error to make against this interface: `moca_HardwareEquipped` returns a 
 | `moca_getIfAcaStatus` | `int` status | Reads the status and results of an ongoing or completed run: the configuration used, the `stat` code, total received power, the power profile and the completion flag. |
 | `moca_getIfScmod` | `int` status | Reads the `SCMOD` statistics collected after a run — modulation, NPER and VLPER per subcarrier for each node pair. |
 
-*Derived from `include/moca_hal.h`:669-705 and :723-1478. The identifier list was extracted from the
+*Derived from [include/moca_hal.h](../../include/moca_hal.h):669-705 and :723-1478. The identifier list was extracted from the
 header's declarations; this table names all 21 and nothing that the header does not declare.*
 
 ### Sequence Diagram
@@ -1052,8 +1067,8 @@ call in the interface moves an interface from one value to another" (`moca_hal.h
 must read the current value and must not assume an ordering. The same holds for `LastChange`, which
 timestamps that a change occurred without describing it.
 
-*Derived from `include/moca_hal.h`:243-259 (the interface status values and the declaration's own
+<em>Derived from `include/moca_hal.h`:243-259 (the interface status values and the declaration's own
 statement that they are not a state machine), :275-290 (the disabled `ACA_STATUS` enumeration),
 :611-618 (`Status` and `LastChange`), :636-665 (`moca_aca_cfg_t` and `moca_aca_stat_t`, including the
 `stat` and `ACATrapCompleted` members) and :1270-1478 (the five `ACA` declarations and their
-pre-conditions, post-conditions, return values and notes).*
+pre-conditions, post-conditions, return values and notes).</em>
