@@ -28,7 +28,7 @@ git log -- docs/pages/MoCAHalSpec.md
 That resemblance is measured, and the threshold is 50% by default, so lowering it to git's floor with the second command above is worth trying first: where it pairs the two paths it shows both stretches of history in one listing, and where the rewrite kept too little of the original for git to pair them at any threshold the third command remains the only route to the earlier revisions.
 
 *Derived from the repository-root changelog, the repository's git tags, `docs/generate_docs.sh`:26,
-and `include/moca_hal.h`:362, :364, :397.*
+and `include/moca_hal.h`:331, :333, :366.*
 
 ## Acronyms
 
@@ -46,7 +46,7 @@ and `include/moca_hal.h`:362, :364, :397.*
 - `SLA` \- Service Level Agreement
 
 *Bounded to the terms this document uses. Expansions are taken from `include/moca_hal.h` — `ACA` at
-:637, `CPE` at :193, `EVM` at :272, `PQoS` at :552, `SCMOD` at :1441 and `NC` at :606.*
+:596, `CPE` at :183, `EVM` at :271, `PQoS` at :506, `SCMOD` at :2025 and `NC` at :369.*
 
 ## Description
 
@@ -90,7 +90,7 @@ answer the protocol-level questions — exact identifiers, data structures, call
 semantics and state transitions. "API Surface" is the boundary between the two: a reader who came
 for the overview can stop above it.
 
-*Derived from `include/moca_hal.h`:59-85 and :723-1478, and from the architecture chain carried by the
+*Derived from `include/moca_hal.h`:59-66 and :626-2111, and from the architecture chain carried by the
 predecessor of this page. The superproject inventory corroborates this scope — interface bring-up
 and configuration, static and dynamic interface information, statistics, and associated-device
 enumeration.*
@@ -112,7 +112,7 @@ The following parts of the interface are optional; the rest of it is not.
 No other component of this interface is optional, and this repository declares no optional external
 daemon or library that a vendor may substitute.
 
-*Derived from `include/moca_hal.h`:238, :374, :528, :1161 (the `MOCA_VAR` guards) and :705 (the
+*Derived from `include/moca_hal.h`:220, :343, :487, :1552 (the `MOCA_VAR` guards) and :700 (the
 callback registration).*
 
 ## Component Runtime Execution Requirements
@@ -158,8 +158,8 @@ Third party vendors will implement appropriately to meet operational requirement
 Before the vendor's MoCA subsystem is ready, a call may not return promptly; see "Blocking calls",
 which states what is and is not specified about that window.
 
-<em>Derived from `include/moca_hal.h`:723-1478 (the complete declaration set, which contains no
-lifecycle call) and :1531-1554 (`moca_HardwareEquipped`).</em>
+<em>Derived from `include/moca_hal.h`:626-2111 (the complete declaration set, which contains no
+lifecycle call) and :1513-1550 (`moca_HardwareEquipped`).</em>
 
 ### Threading Model
 
@@ -184,7 +184,8 @@ polls and registers a callback must therefore serialize its own state against bo
 assuming either delivery context. See "Asynchronous Notification Model".
 
 *Derived from the runtime policy stated by the predecessor of this page, retained here as this
-repository's own statement, and from `include/moca_hal.h`:669-705.*
+repository's own statement, and from `include/moca_hal.h`:681-684 (the per-declaration thread-safety
+note, repeated on every declaration) and :526-530 (the callback's undefined delivery context).*
 
 ### Process Model
 
@@ -218,18 +219,18 @@ no allocator and no matching release function.
   that a caller-supplied pointer is dropped at return. What the declarations do say is that the
   caller owns the storage on both sides of the call: each of the eleven single-pointer structure and
   array out-parameters is documented as addressing caller-allocated storage that **the caller both
-  allocates and releases** — `moca_GetIfConfig` (`moca_hal.h`:759-761), `moca_IfGetDynamicInfo`
-  (:907-910), `moca_IfGetStaticInfo` (:993-996), `moca_IfGetStats` (:1062-1071),
-  `moca_IfGetExtCounter` (:1195-1205), `moca_IfGetExtAggrCounter` (:1259-1268), `moca_GetMocaCPEs`
-  (:1330-1332), `moca_GetFullMeshRates` (:1596-1598), `moca_GetFlowStatistics` (:1672-1674),
-  `moca_getIfAcaConfig` (:1867-1869) and `moca_getIfAcaStatus` (:1981-1983). Each of those entries
+  allocates and releases** — `moca_GetIfConfig` (`moca_hal.h`:744-746), `moca_IfGetDynamicInfo`
+  (:892-894), `moca_IfGetStaticInfo` (:976-978), `moca_IfGetStats` (:1045-1054),
+  `moca_IfGetExtCounter` (:1178-1188), `moca_IfGetExtAggrCounter` (:1242-1251), `moca_GetMocaCPEs`
+  (:1305-1314), `moca_GetFullMeshRates` (:1567-1580), `moca_GetFlowStatistics` (:1642-1656),
+  `moca_getIfAcaConfig` (:1850-1852) and `moca_getIfAcaStatus` (:1964-1966). Each of those entries
   refers the reader to this topic, and none of them states how long the implementation may use the
   pointer it was given. Ownership is therefore settled and retention is not, so the conservative
   reading — the one to follow for all eleven — is to hold each output structure or array in storage
   that stays allocated for as long as the caller keeps using this interface, and to copy the values
   out if it needs to release or reuse that storage sooner.
 - **The two pointer-to-pointer out-parameters say nothing about retention either, and add a second
-  trap.** `moca_GetAssociatedDevices` (`moca_hal.h`:1405-1412) and `moca_getIfScmod` (:2063-2070)
+  trap.** `moca_GetAssociatedDevices` (`moca_hal.h`:1383-1397) and `moca_getIfScmod` (:2046-2058)
   take the address of the caller's own pointer variable. Both declarations state that the caller
   allocates the array and that the pointer written back must not be freed as though the
   implementation had allocated it; neither states a retention rule, so the conservative reading above
@@ -240,13 +241,13 @@ no allocator and no matching release function.
   declaration states whether the implementation writes to the buffer or retains it, so a caller must
   assume neither is safe to rely on: it should not treat its own copy as unchanged after the call and
   should not reuse the storage for something else while it continues to call the interface
-  (`moca_hal.h`:831-836 and :1485-1490).
+  (`moca_hal.h`:816-821 and :1480-1483).
 - **Three parameters are the exceptions, and they are exceptions because a declaration says so.**
   `moca_setIfAcaConfig` takes its configuration **by value**, so no pointer and no lifetime question
-  arises at all (`moca_hal.h`:1283-1285). `moca_GetResetCount` states that its `resetcnt` out-value
+  arises at all (`moca_hal.h`:1767-1769). `moca_GetResetCount` states that its `resetcnt` out-value
   is left untouched on failure, so a caller may initialise the variable once and re-read into it
-  (:1729-1730, :1743-1744). Every other count out-parameter is undefined on failure and must be
-  discarded rather than reused — `moca_GetNumAssociatedDevices` states exactly that (:1148-1149).
+  (:1726-1729, :1734). Every other count out-parameter is undefined on failure and must be
+  discarded rather than reused — `moca_GetNumAssociatedDevices` states exactly that (:1134-1135).
 - **A pointer the interface hands *to* the caller is the opposite case and is even shorter-lived.**
   The `moca_associated_device_t` record delivered to a registered callback is the implementation's,
   not the caller's; it is valid only for the duration of the callback and must be copied there.
@@ -269,12 +270,13 @@ no allocator and no matching release function.
 states a maximum resident size, heap budget or allocation count for an implementation. A caller
 cannot rely on a bound, and an implementer is not held to one by this specification.
 
-<em>Derived from `include/moca_hal.h`:1028-1029, :1064-1066, :1171-1172 and :1450-1452 (the per-function
-ownership and sizing statements); from the per-parameter retention statements at :736-739, :830-832,
-:869-871, :903-905, :968-970, :997-999, :1030-1033, :1174-1176, :1213-1214, :1339-1341 and
-:1407-1409, the non-`const` input caveats at :781-785 and :1104-1108 with :1115-1117, the by-value
-parameter at :1283-1285, and the on-failure statements at :938-939 and :1249-1254; and from the
-memory model stated by the predecessor of this page.</em>
+<em>Derived from `include/moca_hal.h`:744-746, :892-894, :976-978, :1045-1054, :1178-1188, :1242-1251,
+:1305-1314, :1567-1580, :1642-1656, :1850-1852 and :1964-1966 (the eleven single-pointer
+out-parameter ownership statements, including the two that also state an array capacity); from
+:1383-1397 and :2046-2058 (the two pointer-to-pointer out-parameters), the non-`const` input caveats
+at :816-821 and :1480-1483, the by-value parameter at :1767-1769, and the on-failure statements at
+:1726-1729 with :1734 and at :1134-1135; and from the memory model stated by the predecessor of this
+page.</em>
 
 ### Power Management Requirements
 
@@ -286,7 +288,7 @@ The transmit power members this interface exposes — `TxPowerLimit`, `BeaconPow
 power states, and setting them does not participate in system power management.
 
 *Derived from the power management statement carried by the predecessor of this page, and from
-`include/moca_hal.h`:327-337.*
+`include/moca_hal.h`:307, :309 and :317.*
 
 ### Asynchronous Notification Model
 
@@ -339,8 +341,8 @@ picture of network membership should therefore reconcile against
 `moca_GetNumAssociatedDevices` and `moca_GetAssociatedDevices` rather than treating the notification
 stream as authoritative.
 
-*Derived from `include/moca_hal.h`:575-603 (the callback typedef and its documented trigger),
-:669-705 (the registration function), and :523 (the `Active` member).*
+*Derived from `include/moca_hal.h`:522-563 (the callback typedef and its documented trigger),
+:626-700 (the registration function), and :482 (the `Active` member).*
 
 ### Blocking calls
 
@@ -375,7 +377,7 @@ but it is not a blocking call: `moca_setIfAcaConfig` starts the run and returns,
 learns of completion by polling `moca_getIfAcaStatus`. See "State Diagram".
 
 *Derived from the blocking-call policy stated by the predecessor of this page, and from
-`include/moca_hal.h`:1270-1327 and :1397-1438 (the `ACA` start and status contracts).*
+`include/moca_hal.h`:1752-1835 and :1949-2022 (the `ACA` start and status contracts).*
 
 ### Internal Error Handling
 
@@ -410,14 +412,15 @@ separated by reading `moca_getIfAcaStatus` and inspecting the `stat` member of `
 rather than by comparing the return value. A caller must not treat the two macro names as
 distinguishable at run time.
 
-The header also records that extending these codes with the specific reason for a failure was
-raised during the open-source migration review and is **not** part of this revision, because it
-would change the interface. A caller should therefore treat any non-zero value as a failure of the
-class above rather than assuming the set is closed.
+The header also records that this return-code set is deliberately coarse and must be read as open
+rather than closed: `STATUS_FAILURE` carries no reason, and nothing in the header states that these
+codes are the whole of what an implementation may return. A caller should therefore treat any
+non-zero value as a failure of the class above rather than assuming the set is closed.
 
-*Derived from `include/moca_hal.h`:143-153 and :219-222 (the macro values), :713-721 (the recorded
-intent to extend the codes), :1812-1818 (the `moca_setIfAcaConfig` return contract) and :626 (the
-`stat` member), plus the error-handling policy stated by the predecessor of this page.*
+*Derived from `include/moca_hal.h`:137-147 and :198-201 (the macro values), :708-724 (the coarse and
+open return-code set), :1795-1808 and :1823-1828 (the `moca_setIfAcaConfig` return contract and the
+colliding codes) and :613 (the `stat` member), plus the error-handling policy stated by the
+predecessor of this page.*
 
 ### Persistence Model
 
@@ -429,7 +432,7 @@ setting it returns the MoCA configuration parameters to their defaults, so a cal
 persisted settings of its own is responsible for re-applying them afterwards.
 
 *Derived from the persistence statement carried by the predecessor of this page, and from
-`include/moca_hal.h`:334.*
+`include/moca_hal.h`:314.*
 
 ## Non functional requirements
 
@@ -470,15 +473,15 @@ Handling".
 **Handling of secret values and node addresses in log and debug output.** This interface moves one
 credential and six address fields, and both classes are excluded from the log described above:
 
-- **The credential.** `moca_cfg_t.KeyPassphrase` (`include/moca_hal.h`:325) is the link privacy
+- **The credential.** `moca_cfg_t.KeyPassphrase` (`include/moca_hal.h`:305) is the link privacy
   password. It travels in both directions — `moca_GetIfConfig()` reads the whole structure back and
   `moca_SetIfConfig()` writes the whole structure in — so a caller performing a read-modify-write
   holds the password in its own storage across two calls.
-- **The node addresses.** `moca_static_info_t.MacAddress` (`include/moca_hal.h`:361) is the local
-  node's address; `moca_dynamic_info_t.NetworkCoordinatorMACAddress` (:409) is the Network
-  Coordinator's; `moca_cpe_t.mac_addr` (:488) and `moca_associated_device_t.MACAddress` (:507) are
+- **The node addresses.** `moca_static_info_t.MacAddress` (`include/moca_hal.h`:330) is the local
+  node's address; `moca_dynamic_info_t.NetworkCoordinatorMACAddress` (:378) is the Network
+  Coordinator's; `moca_cpe_t.mac_addr` (:458) and `moca_associated_device_t.MACAddress` (:466) are
   the addresses of the nodes and customer-premises equipment on the link; and
-  `moca_flow_table_t.DestinationMACAddress` (:567) is the destination of an admitted PQoS flow. A
+  `moca_flow_table_t.DestinationMACAddress` (:514) is the destination of an admitted PQoS flow. A
   node address identifies a subscriber's own equipment and links a unit to a subscriber record,
   which makes it personal data in this context.
 
@@ -516,8 +519,10 @@ The following requirements bind the vendor implementation and the `RDK-B` caller
   contract, and treats their absence from a vendor log as unverified until it has done so.
 
 *Derived from the logging policy stated by the predecessor of this page, and from
-`include/moca_hal.h`:147-149, :302-313, :325, :361, :409, :488, :507, :567, :753-758 and
-:803-809.*
+`include/moca_hal.h`:137-147 (the return-code macros a log must classify), :302 and :305, :330,
+:378, :458, :466 and :514 (the credential and address members), :752-754 (the text-array bounds a
+log must respect) and :786-789 (the header's own warning against logging the configuration
+structure).*
 
 ### Memory and performance requirements
 
@@ -540,7 +545,9 @@ carries a 512-element power profile, and `moca_cfg_t` and `moca_static_info_t` e
 `kMoca_MaxMocaNodes` (16).
 
 *Derived from the memory and performance policy stated by the predecessor of this page, and from
-`include/moca_hal.h`:198, :207, :324, :340-341, :366-367, :631-633 and :663.*
+`include/moca_hal.h`:584-593 and :610-617 (the two largest declared structures), :295-322 and
+:327-341 (the 128-byte mask members), and :185 with :190 (`kMoca_MaxCpeList` and
+`kMoca_MaxMocaNodes`).*
 
 ### Quality Control
 
@@ -644,8 +651,9 @@ it does not: `include/moca_hal.h` and the conditional markings on this page are 
 surface a particular build has.
 
 *Derived from `docs/generate_docs.sh`:23 and :27, the pinned generator's `Makefile` and Doxygen
-configuration at tag `1.2.0`, `include/moca_hal.h`:238, :374, :528, :1161 and :1192, and the
-variability statement carried by the predecessor of this page.*
+configuration at tag `1.2.0`, `include/moca_hal.h`:220, :343, :487 and :1552 (the four `MOCA_VAR`
+guards) with :1608-1611 (the conditional declaration's own note), and the variability statement
+carried by the predecessor of this page.*
 
 ### Platform or Product Customization
 
@@ -680,7 +688,7 @@ header uses.
 `MOCA_VAR` is the only customization flag this interface defines. No other platform or product
 variation is expressed in the header.
 
-*Derived from `include/moca_hal.h`:238-261, :374-413, :528-547 and :1161-1201, and the customization
+*Derived from `include/moca_hal.h`:220-253, :343-382, :487-501 and :1552-1627, and the customization
 inventory carried by the predecessor of this page.*
 
 ## Interface API Documentation
@@ -753,8 +761,8 @@ Diagram".
 
 - `ACA` ordering: `moca_setIfAcaConfig` must precede `moca_getIfAcaStatus` and `moca_getIfScmod`,
   because both report on a run that the former configures or starts — the polling call states that a
-  run must have been configured or started for its result to be meaningful (`moca_hal.h`:2039-2039),
-  and the statistics call that a run must have completed (:1459-1460). That is a call-ordering rule,
+  run should have been configured or started for its result to be meaningful (`moca_hal.h`:1977-1979),
+  and the statistics call that a run must have completed (:2072-2074). That is a call-ordering rule,
   not a transition: "State Diagram" sets out what each operation is documented to do and what the
   interface leaves unspecified, and draws no edge.
 
@@ -772,22 +780,25 @@ Diagram".
   `moca_cancelIfAca` are specifically related to the Automatic Channel Adaptation (`ACA`) process.
   `moca_setIfAcaConfig` is the one function in this interface whose return value depends on current
   state: it returns `STATUS_INPROGRESS` when a run is already active instead of starting a new one
-  (`moca_hal.h`:1816, :1842-1843). The other two are defined whichever condition the interface is in:
-  `moca_getIfAcaConfig` reads the parameters in any `ACA` condition and changes nothing (:1859-1860,
-  :1930), and `moca_cancelIfAca` states no pre-condition beyond a valid interface index and reports
-  the same success whether a run was active or not (:1927-1930, :1941-1943). What each of them is
+  (`moca_hal.h`:1799-1801, :1819-1821). The other two are defined whichever condition the interface is in:
+  `moca_getIfAcaConfig` reads the parameters in any `ACA` condition and changes nothing (:1842-1843,
+  :1872), and `moca_cancelIfAca` states no pre-condition beyond a valid interface index and reports
+  the same success whether a run was active or not (:1910-1912, :1924-1926). What each of them is
   documented to leave unspecified is set out in "State Diagram".
 
 - **State Model:** This interface reports state and does not model it. The `ACA` run's condition is
   read out of `moca_aca_stat_t` and the interface's condition out of `moca_dynamic_info_t::Status`;
   in neither case does a declaration state which value may follow which, what causes a change or in
   what order values occur, and the interface-status declaration says so in those terms
-  (`moca_hal.h`:243-245). "State Diagram" therefore presents the documented effect of each operation
+  (`moca_hal.h`:231-234). "State Diagram" therefore presents the documented effect of each operation
   and the observable value sets, and draws no transition. A caller must treat any of these values as
   a current observation and nothing more.
 
-*Derived from `include/moca_hal.h`:250-259, :315-342, :723-818, :925-955, :1020-1055, :1270-1327 and
-:1397-1478, and the theory-of-operation material carried by the predecessor of this page.*
+*Derived from `include/moca_hal.h`:231-251 and :295-322 (the interface-status values and the
+configuration structure), :727-794 and :796-873 (the read-modify-write pair), :875-956 and :958-1027
+(the dynamic and static readers), :1291-1366 and :1368-1456 (the two node enumerations) and
+:1752-2111 (the five `ACA` declarations), and the theory-of-operation material carried by the
+predecessor of this page.*
 
 ### Data Structures and Defines
 
@@ -799,11 +810,11 @@ comment on the field itself. Line numbers are given so a caller can go straight 
 
 | Type | Declared at | What it represents |
 | --- | --- | --- |
-| `moca_if_status_t` | :250-259 | The seven possible states of a MoCA interface — `IF_STATUS_Up` (1), `IF_STATUS_Down` (2), `IF_STATUS_Unknown` (3), `IF_STATUS_Dormant` (4), `IF_STATUS_NotPresent` (5), `IF_STATUS_LowerLayerDown` (6) and `IF_STATUS_Error` (7). Reported through the `Status` member of `moca_dynamic_info_t`. `MOCA_VAR`-conditional. |
-| `PROBE_TYPE` | :611-618 | The probe an `ACA` run uses — `PROBE_QUITE` (0), a quiet probe that transmits no signal, or `PROBE_EVM` (1), which transmits a signal to measure quality as `EVM`. Supplied in the `Type` member of `moca_aca_cfg_t`. |
+| `moca_if_status_t` | :242-251 | The seven possible states of a MoCA interface — `IF_STATUS_Up` (1), `IF_STATUS_Down` (2), `IF_STATUS_Unknown` (3), `IF_STATUS_Dormant` (4), `IF_STATUS_NotPresent` (5), `IF_STATUS_LowerLayerDown` (6) and `IF_STATUS_Error` (7). Reported through the `Status` member of `moca_dynamic_info_t`. `MOCA_VAR`-conditional. |
+| `PROBE_TYPE` | :268-272 | The probe an `ACA` run uses — `PROBE_QUITE` (0), a quiet probe that transmits no signal, or `PROBE_EVM` (1), which transmits a signal to measure quality as `EVM`. Supplied in the `Type` member of `moca_aca_cfg_t`. |
 
 The header also contains a third enumeration, `ACA_STATUS`, which is **excluded from compilation** —
-it is enclosed in a disabled conditional block at :281-290 — and is therefore **not part of the
+it is enclosed in a disabled conditional block at :274-288 — and is therefore **not part of the
 interface**. It is named here only so that a reader who finds it in the header knows why it cannot
 be referenced from calling code; it must not be treated as an available type. The live `ACA` result
 values are the four `STATUS_*` macros listed further down and the `stat` member of
@@ -814,26 +825,26 @@ values are the four `STATUS_*` macros listed further down and the `stat` member 
 
 | Type | Declared at | What it represents |
 | --- | --- | --- |
-| `moca_cfg_t` | :315-342 | The writable configuration of an interface: alias, enable and privacy flags, preferred-`NC` flag, frequency and taboo masks, passphrase, transmit and beacon power limits, bandwidth thresholds, mixed mode, channel scanning and the reset flag. Exchanged by `moca_GetIfConfig` and `moca_SetIfConfig`. |
-| `moca_static_info_t` | :337-351 | Properties fixed for the life of the interface: name, MAC address, firmware version, maximum bit rate, highest supported MoCA version, frequency capability and network taboo masks, and the `QAM256` and packet-aggregation capability flags. |
-| `moca_dynamic_info_t` | :391-411 | Live interface and network state: status, last change, ingress and egress bandwidth maxima and their threshold flags, current MoCA version, `NC` and backup `NC` node IDs, local node ID, current and last operating frequency, connected client count, `NC` MAC address and link uptime. `MOCA_VAR`-conditional. |
-| `moca_stats_t` | :423-442 | Network-layer counters: bytes and packets sent and received, errors, discards, and the unicast, multicast, broadcast and unknown-protocol splits. |
-| `moca_mac_counters_t` | :441-449 | MAC-layer packet counters: MAP, reservation request, link control, admission request, probe and asynchronous beacon packets received. |
-| `moca_aggregate_counters_t` | :460-464 | Aggregate transmitted and received payload data unit counts, excluding MoCA control packets. |
-| `moca_cpe_t` | :469-472 | One `CPE` node, carrying its MAC address. Returned as an array by `moca_GetMocaCPEs`. |
-| `moca_associated_device_t` | :477-498 | One node on the MoCA network: MAC address, node ID, preferred-`NC` flag, highest MoCA version, transmit and receive `PHY` rates, broadcast rates, power levels and reduction, packet and error counts, capability flags, receive signal-to-noise ratio, client count, and the `Active` flag that the notification callback uses to signal a join or a leave. |
-| `moca_mesh_table_t` | :506-513 | One entry of the mesh `PHY` rate table: the receiving and transmitting node IDs and the transmit rate between them, plus the MoCA 2.x NPER and VLPER rates. `MOCA_VAR`-conditional. |
-| `moca_flow_table_t` | :521-533 | One ingress `PQoS` flow: flow ID, ingress and egress node IDs, remaining and initial lease time, destination MAC address, packet size, peak data rate, burst size and flow tag. |
-| `moca_assoc_pnc_info_t` | :587-592 | A node's preferred-`NC` information: node index, preferred-`NC` flag and the MoCA version the node supports. This structure is declared for callers that need it; no function in this interface takes or returns it. |
-| `moca_scmod_stat_t` | :597-606 | `SCMOD` statistics for one node pair: transmitting and receiving node IDs, the channel, and 512-element modulation, NPER and VLPER arrays. Returned as an array by `moca_getIfScmod`. |
-| `moca_aca_cfg_t` | :611-618 | The `ACA` request: node ID, probe type, channel, a bitmask of reporting nodes, and the `ACAStart` flag that decides whether the call configures only or also starts the run. |
-| `moca_aca_stat_t` | :623-630 | The `ACA` result: the configuration used, the `stat` code, total received power, a 512-element per-channel power profile, and the `ACATrapCompleted` flag indicating that the profile is ready. |
+| `moca_cfg_t` | :295-322 | The writable configuration of an interface: alias, enable and privacy flags, preferred-`NC` flag, frequency and taboo masks, passphrase, transmit and beacon power limits, bandwidth thresholds, mixed mode, channel scanning and the reset flag. Exchanged by `moca_GetIfConfig` and `moca_SetIfConfig`. |
+| `moca_static_info_t` | :327-341 | Properties fixed for the life of the interface: name, MAC address, firmware version, maximum bit rate, highest supported MoCA version, frequency capability and network taboo masks, and the `QAM256` and packet-aggregation capability flags. |
+| `moca_dynamic_info_t` | :360-380 | Live interface and network state: status, last change, ingress and egress bandwidth maxima and their threshold flags, current MoCA version, `NC` and backup `NC` node IDs, local node ID, current and last operating frequency, connected client count, `NC` MAC address and link uptime. `MOCA_VAR`-conditional. |
+| `moca_stats_t` | :397-416 | Network-layer counters: bytes and packets sent and received, errors, discards, and the unicast, multicast, broadcast and unknown-protocol splits. |
+| `moca_mac_counters_t` | :428-436 | MAC-layer packet counters: MAP, reservation request, link control, admission request, probe and asynchronous beacon packets received. |
+| `moca_aggregate_counters_t` | :447-451 | Aggregate transmitted and received payload data unit counts, excluding MoCA control packets. |
+| `moca_cpe_t` | :456-459 | One `CPE` node, carrying its MAC address. Returned as an array by `moca_GetMocaCPEs`. |
+| `moca_associated_device_t` | :464-485 | One node on the MoCA network: MAC address, node ID, preferred-`NC` flag, highest MoCA version, transmit and receive `PHY` rates, broadcast rates, power levels and reduction, packet and error counts, capability flags, receive signal-to-noise ratio, client count, and the `Active` flag that the notification callback uses to signal a join or a leave. |
+| `moca_mesh_table_t` | :493-500 | One entry of the mesh `PHY` rate table: the receiving and transmitting node IDs and the transmit rate between them, plus the MoCA 2.x NPER and VLPER rates. `MOCA_VAR`-conditional. |
+| `moca_flow_table_t` | :508-520 | One ingress `PQoS` flow: flow ID, ingress and egress node IDs, remaining and initial lease time, destination MAC address, packet size, peak data rate, burst size and flow tag. |
+| `moca_assoc_pnc_info_t` | :574-579 | A node's preferred-`NC` information: node index, preferred-`NC` flag and the MoCA version the node supports. This structure is declared for callers that need it; no function in this interface takes or returns it. |
+| `moca_scmod_stat_t` | :584-593 | `SCMOD` statistics for one node pair: transmitting and receiving node IDs, the channel, and 512-element modulation, NPER and VLPER arrays. Returned as an array by `moca_getIfScmod`. |
+| `moca_aca_cfg_t` | :598-605 | The `ACA` request: node ID, probe type, channel, a bitmask of reporting nodes, and the `ACAStart` flag that decides whether the call configures only or also starts the run. |
+| `moca_aca_stat_t` | :610-617 | The `ACA` result: the configuration used, the `stat` code, total received power, a 512-element per-channel power profile, and the `ACATrapCompleted` flag indicating that the profile is ready. |
 
 **Callback type.** One function pointer type is declared, and it is installed by exactly one function.
 
 | Type | Declared at | Installed by | What it represents |
 | --- | --- | --- | --- |
-| `moca_associatedDevice_callback` | :640-668 | `moca_associatedDevice_callback_register` (:669-705) | `INT (*)(ULONG ifIndex, moca_associated_device_t *moca_dev)` — invoked when a MoCA client is activated or deactivated on the network. See "Asynchronous Notification Model". |
+| `moca_associatedDevice_callback` | :563 | `moca_associatedDevice_callback_register` (:626-700) | `INT (*)(ULONG ifIndex, moca_associated_device_t *moca_dev)` — invoked when a MoCA client is activated or deactivated on the network. See "Asynchronous Notification Model". |
 
 **Macros a caller must interpret.**
 
@@ -852,11 +863,11 @@ values are the four `STATUS_*` macros listed further down and the `stat` member 
 | `TRUE` / `FALSE` / `ENABLE` | 1 / 0 / 1 | Control values for the `BOOL` members of the structures above. |
 
 The header additionally defines the fixed-width aliases `ULONG`, `BOOL`, `CHAR`, `UCHAR`, `INT` and
-`UINT` at :107-129, each guarded by `#ifndef` so that a caller which already defines them keeps its own
+`UINT` at :101-123, each guarded by `#ifndef` so that a caller which already defines them keeps its own
 definition. `BOOL` is an `unsigned char`, so a `BOOL` member must be compared against `TRUE` or
 `FALSE` rather than assumed to be a single bit.
 
-*Derived from `include/moca_hal.h`:107-153, :192-222, :238-290, :294-665 and :669-705.*
+*Derived from `include/moca_hal.h`:101-147, :182-201, :228-288, :292-617, :522-563 and :626-700.*
 
 ### API Surface
 
@@ -864,6 +875,8 @@ All 21 declared functions are listed below by exact identifier, grouped by funct
 detail — argument direction, valid ranges, array sizing, pre-conditions and the full return-code
 list — is carried by the Doxygen block on each declaration in
 [include/moca_hal.h](../../include/moca_hal.h), under the `MOCA_HAL_APIS` group.
+
+**Where these pointers resolve.** The locators in this topic are relative paths into `include/moca_hal.h`, the form this documentation set uses throughout, so they resolve on GitHub and in a checkout \- the surface a developer using this repository reads. They do **not** resolve from inside the generated documentation site: the generator copies each link target verbatim into a page one directory below this file, so a site served with `docs/output/html` as its root has nothing above that root to reach and answers `404`, and opened from the filesystem the same target does not exist. Follow a source pointer on GitHub or in a checkout; inside the generated site, reach the same declaration through its `Files` and function-index pages.
 
 Three of the 21 do not return a status code, and mistaking them for status-returning calls is the
 easiest error to make against this interface: `moca_HardwareEquipped` returns a `BOOL`,
@@ -922,8 +935,9 @@ easiest error to make against this interface: `moca_HardwareEquipped` returns a 
 | `moca_getIfAcaStatus` | `int` status | Reads the status and results of an ongoing or completed run: the configuration used, the `stat` code, total received power, the power profile and the completion flag. |
 | `moca_getIfScmod` | `int` status | Reads the `SCMOD` statistics collected after a run — modulation, NPER and VLPER per subcarrier for each node pair. |
 
-*Derived from [include/moca_hal.h](../../include/moca_hal.h):669-705 and :723-1478. The identifier list was extracted from the
-header's declarations; this table names all 21 and nothing that the header does not declare.*
+*Derived from [include/moca_hal.h](../../include/moca_hal.h):626-2111, the span carrying all 21
+declarations. The identifier list was extracted from those declarations; this table names all 21 and
+nothing that the header does not declare.*
 
 ### Sequence Diagram
 
@@ -979,8 +993,12 @@ Vendor Software ->>MoCA HAL: associated device event
 MoCA HAL->>Client Module: registered callback, Active TRUE or FALSE
 ```
 
-*Derived from `include/moca_hal.h`:575-603, :669-705, :723-955 and :1020-1159, and the diagram carried
-by the predecessor of this page.*
+*Derived from `include/moca_hal.h`:522-563 and :626-700 (the callback typedef and its registration),
+:727-873 (the configuration read-modify-write pair), :875-1027 (the dynamic and static readers),
+:1096-1160 with :1368-1456 (the node count and the per-node records) and :1513-1550
+(`moca_HardwareEquipped`), and the diagram carried by the predecessor of this page.*
+
+Every diagram in this document is a fenced `mermaid` block. Such blocks render as diagrams on GitHub, which the repository's `README.md` symlink makes the primary reading surface for this specification; they do **not** render in the `HTML` the documentation generator produces, where the block appears as its source text instead. That limitation is stated here rather than worked around, because the only available workaround would fix the generated site at the cost of the surface most readers use.
 
 ### State Diagram
 
@@ -995,9 +1013,9 @@ of what the interface leaves unspecified.
 **The `ACA` values a caller can observe.** `moca_aca_stat_t::stat` is a plain `INT` documented as `0`
 `SUCCESS`, `1` `FAIL_BADCHANNEL`, `2` `FAIL_NOEVMPROBE`, `3` `FAIL` and `4` `IN_PROGRESS`, and
 `ACATrapCompleted` is a `BOOL` that is `TRUE` only once the power profile is ready to read
-(`moca_hal.h`:661, :664). The matching `ACA_STATUS` enumeration is enclosed in a permanently disabled
+(`moca_hal.h`:613, :616). The matching `ACA_STATUS` enumeration is enclosed in a permanently disabled
 `#if 0` block and is **not part of this interface**, so a caller compares against the numbers rather
-than the names (:275-290). Both value sets, drawn as declared values with **no edge between them,
+than the names (:274-288). Both value sets, drawn as declared values with **no edge between them,
 because the interface specifies none**:
 
 ```mermaid
@@ -1021,13 +1039,13 @@ All locators are in `include/moca_hal.h`.
 
 | Operation | Documented effect of success | What it does not establish |
 | --- | --- | --- |
-| `moca_setIfAcaConfig` with `ACAStart` `TRUE` | The run begins immediately (:1773), and the parameters supplied are in force (:1802-1803). | How long a run takes, and any notification that it has finished — polling is the only mechanism (:1827-1829). |
-| `moca_setIfAcaConfig` with `ACAStart` `FALSE` | The configuration parameters are set and no run starts (:1803). | Nothing about the value `stat` reports before, during or after that call. |
-| `moca_setIfAcaConfig` while a run is active | The call is rejected with `STATUS_INPROGRESS`, nothing is changed and the existing run continues (:1805, :1816, :1842-1843). | Which of the two outcomes occurred, from the return value alone: `STATUS_INPROGRESS` and `STATUS_FAILURE` are both `-1`, so a caller must read `moca_getIfAcaStatus` to tell them apart (:1840-1843). On any other failure, whether a parameter was applied (:1805-1807). |
-| `moca_getIfAcaConfig` | The parameters currently in force are read, in any `ACA` condition, and nothing is changed (:1859-1860, :1881). | A default before the first `moca_setIfAcaConfig` (:1881-1883). It is not a run indicator either: `ACAStart` reflects the value last set, not whether a run is active (:1884-1885). |
-| `moca_cancelIfAca` | On `STATUS_SUCCESS` no `ACA` run is active on the interface (:1930). | **That the run had stopped by the time the call returned**, and any bound on how long termination takes (:1948-1950). Whether a cancelled run's results stay readable through `moca_getIfAcaStatus` or `moca_getIfScmod`, and whether the configuration survives (:1930-1933). Whether a run was active at all, since success covers both cases (:1941-1943). The outcome of a cancellation racing another caller's start (:1955-1956). |
-| `moca_getIfAcaStatus` | Reads `stat`, the configuration used, `RxPower`, `ACAPowProfile` and `ACATrapCompleted` for an ongoing or completed run (:1402-1403, :2000-2004). | Nothing about the run itself: success reports that the **read** succeeded, not that the run did (:2009-2011). What the members hold when no run has ever been requested (:2039-2042). |
-| `moca_getIfScmod` | Reads the `SCMOD` statistics collected after a run (:2048). | Whether a failure means "no run has completed" or a read error — the two are indistinguishable, so a caller confirms completion with `moca_getIfAcaStatus` first (:2106-2109). |
+| `moca_setIfAcaConfig` with `ACAStart` `TRUE` | The run begins immediately and `moca_getIfAcaStatus` reports its progress (:1785-1786), and the configuration supplied was accepted (:1795-1796). | How long a run takes, and any notification that it has finished — polling is the only mechanism (:1785-1786, :1815). |
+| `moca_setIfAcaConfig` with `ACAStart` `FALSE` | The configuration parameters are recorded and no run has begun (:1786-1787). | Nothing about the value `stat` reports before, during or after that call. |
+| `moca_setIfAcaConfig` while a run is active | The call does not start another run and reports `STATUS_INPROGRESS` (:1781-1783, :1799-1801). | Which of the two outcomes occurred, from the return value alone: `STATUS_INPROGRESS` and `STATUS_FAILURE` are both `-1`, so a caller must read `moca_getIfAcaStatus` to tell them apart (:1823-1828). On any other failure, whether the configuration was recorded (:1787-1789). |
+| `moca_getIfAcaConfig` | The parameters currently in force are read, in any `ACA` condition, and nothing is changed (:1842-1843, :1859-1860). | What the members hold before any configuration has been set on the interface (:1855-1857). It is not a run indicator either: `ACAStart` reflects the value last set, not whether a run is active (:1864-1867). |
+| `moca_cancelIfAca` | On `STATUS_SUCCESS` the cancellation was accepted, which covers both a run that was cancelled and no run having been active (:1913-1914). | **That the run had stopped by the time the call returned**, and any bound on how long termination takes (:1914-1916, :1936-1937). Whether a cancelled run's results stay readable through `moca_getIfAcaStatus` or `moca_getIfScmod`, and whether the configuration survives (:1917-1920). Whether a run was active at all, since success covers both cases (:1924-1926). The outcome of a cancellation racing another caller's start (:1938-1941). |
+| `moca_getIfAcaStatus` | Reads `stat`, the configuration used, `RxPower`, `ACAPowProfile` and `ACATrapCompleted` for an ongoing or completed run (:612-616, :1955-1956, :1983-1986). | Nothing about the run itself: success reports that the **read** succeeded, not that the run did (:1989-1991). What the members hold when no run has ever been requested (:1979-1980). |
+| `moca_getIfScmod` | Reads the `SCMOD` statistics collected after a run into the first `*pnumOfEntries` entries of the caller's array (:2079-2081). | Whether a failure means "no run has completed" or a read error — the two are indistinguishable, so a caller confirms completion with `moca_getIfAcaStatus` first (:2072-2074, :2089-2091). |
 
 **What is deliberately left unspecified rather than drawn.** Each of these was looked for in the
 header and is absent, and drawing it would put a contract in front of a downstream test author that
@@ -1035,7 +1053,7 @@ the interface does not make:
 
 - **No initial value.** Nothing states what `stat` reports before any run has been requested — the
   polling call states in terms that this interface does not say what the members hold when no run has
-  ever been requested (:1411-1414) — so there is no value for a start marker to point at.
+  ever been requested (:1979-1980) — so there is no value for a start marker to point at.
 - **No ordering.** No declaration names a value as a required or forbidden predecessor of another,
   and no declaration reports a change of value; a caller reads the current value and cannot infer a
   sequence from two readings.
@@ -1045,9 +1063,9 @@ the interface does not make:
 - **No completion of a cancellation.** This is the sharpest case, and it is why the previous revision
   of this topic was wrong to draw an edge for it: `moca_cancelIfAca` does not state that the run has
   stopped when it returns, and reports the same success whether a run was cancelled or none was
-  active (:1941-1943, :1948-1950). An edge would assert both a destination and a moment the interface
+  active (:1914-1916, :1924-1926). An edge would assert both a destination and a moment the interface
   refuses to name. A caller that needs to know a cancellation took effect reads
-  `moca_getIfAcaStatus` and treats a `4` as "still running" (:2011-2013).
+  `moca_getIfAcaStatus` and treats a `4` as "still running" (:613, :1983-1984).
 
 **What a caller may rely on, and what it must not.** A caller may rely on `stat` reporting one of
 those five values, on `ACATrapCompleted` being `TRUE` only when the power profile is ready to read,
@@ -1061,14 +1079,15 @@ condition is to call `moca_getIfAcaStatus` again.
 `moca_if_status_t` — `IF_STATUS_Up`, `IF_STATUS_Down`, `IF_STATUS_Unknown`, `IF_STATUS_Dormant`,
 `IF_STATUS_NotPresent`, `IF_STATUS_LowerLayerDown` and `IF_STATUS_Error` — are reported through the
 `Status` member of `moca_dynamic_info_t`. **This interface does not specify the transitions between
-them**: the declaration says so in those terms — "These are observed values, not a state machine:
-this interface specifies no transition between them, no event that causes one and no ordering, and no
-call in the interface moves an interface from one value to another" (`moca_hal.h`:243-245). A caller
+them**: the declaration says so in those terms — "This enumeration does not describe a state
+machine. It defines the values the Status member may hold and nothing more: this interface states no
+legal transition, no ordering between the states and no event that causes a change, so a caller reads
+the current value and must not infer a sequence from it" (`moca_hal.h`:231-234). A caller
 must read the current value and must not assume an ordering. The same holds for `LastChange`, which
 timestamps that a change occurred without describing it.
 
-<em>Derived from `include/moca_hal.h`:243-259 (the interface status values and the declaration's own
-statement that they are not a state machine), :275-290 (the disabled `ACA_STATUS` enumeration),
-:611-618 (`Status` and `LastChange`), :636-665 (`moca_aca_cfg_t` and `moca_aca_stat_t`, including the
-`stat` and `ACATrapCompleted` members) and :1270-1478 (the five `ACA` declarations and their
+<em>Derived from `include/moca_hal.h`:231-251 (the interface status values and the declaration's own
+statement that they are not a state machine), :274-288 (the disabled `ACA_STATUS` enumeration),
+:362-363 (`Status` and `LastChange`), :598-617 (`moca_aca_cfg_t` and `moca_aca_stat_t`, including the
+`stat` and `ACATrapCompleted` members) and :1752-2111 (the five `ACA` declarations and their
 pre-conditions, post-conditions, return values and notes).</em>
