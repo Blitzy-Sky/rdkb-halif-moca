@@ -61,8 +61,9 @@ For a caller, the interface covers five things:
 The following parts of the interface are optional; every other part is mandatory.
 
 - **The `MOCA_VAR`-conditional surface.** `moca_GetFullMeshRates`, the `moca_mesh_table_t` structure
-  it fills, `moca_if_status_t` and `moca_dynamic_info_t` are compiled only when `MOCA_VAR` is not
-  defined; "Platform or Product Customization" states what a `MOCA_VAR` build loses.
+  it fills, `moca_if_status_t` and `moca_dynamic_info_t` are declared only when `MOCA_VAR` is not
+  defined, the only build in which the shipped header compiles ("Platform or Product
+  Customization").
 - **The associated-device notification callback.** A caller that polls `moca_GetNumAssociatedDevices`
   and `moca_GetAssociatedDevices` need not register one with
   `moca_associatedDevice_callback_register`; a caller that does receives node join and leave events
@@ -115,9 +116,10 @@ conditions, and maintain the overall stability and reliability of the system.
 
 ### Memory Model
 
-The caller owns all memory exchanged across this interface. Every function that produces data writes
-it into storage the caller supplies; no function returns storage the caller must free, and the
-interface has no allocator or release function.
+The caller owns the storage it passes to this interface's functions. Every function that produces
+data writes it into storage the caller supplies; no function returns storage the caller must free,
+and the interface has no allocator or release function. The record a notification callback receives
+falls outside that ownership and is handled as "Caller Responsibilities" sets out.
 
 #### Caller Responsibilities
 
@@ -128,6 +130,9 @@ interface has no allocator or release function.
 - `moca_GetAssociatedDevices` and `moca_getIfScmod` take the address of a pointer the caller has set
   to its own array; that array remains the caller's to release.
 - Treat every output value as invalid when the call that produced it fails.
+- Keep the `moca_cfg_t` passed to `moca_SetIfConfig` and the `mask` array passed to
+  `moca_FreqMaskToValue` valid after the call returns, and free or overwrite that storage only once
+  the vendor implementation has established that it no longer uses it.
 - Copy what is needed out of the `moca_associated_device_t` record a notification callback receives
   before the callback returns, and neither keep nor free that pointer.
 
@@ -281,31 +286,29 @@ Each API interface will be versioned using [Semantic Versioning 2.0.0](https://s
 and the vendor code will comply with a specific version of the interface.
 
 `MOCA_VAR` is the single compile-time flag that changes this interface; "Platform or Product
-Customization" states what it removes.
+Customization" states what it guards and which build is usable.
 
 **The generated documentation describes the build in which `MOCA_VAR` is not defined.**
 `docs/generate_docs.sh` passes ``DOXYGEN_EXTRA_PARAMS="PREDEFINED='MOCA_VAR=0'"``, but the pinned
 generator, `1.2.0`, does not use that variable and leaves `PREDEFINED` empty. The generated reference
-therefore includes the four `MOCA_VAR`-conditional symbols, which a build that defines `MOCA_VAR` does
-not declare. The header and the conditional markings on this page establish the surface a given
-build has.
+therefore includes the four `MOCA_VAR`-conditional symbols, as does every build in which the shipped
+header compiles.
 
 ### Platform or Product Customization
 
-When `MOCA_VAR` is defined, the header excludes four symbols from compilation:
+The header guards four symbols with `#ifndef MOCA_VAR`, so defining `MOCA_VAR` excludes them:
 
-**Exclusion of `moca_if_status_t` Enumeration:** the interface status values (`IF_STATUS_Up`,
-`IF_STATUS_Down` and the others) are not declared, so code that relies on them does not compile.
+- `moca_if_status_t` — the interface status values (`IF_STATUS_Up`, `IF_STATUS_Down` and the
+  others).
+- `moca_dynamic_info_t` — the dynamic interface information (status, last change, bandwidth maxima
+  and the rest).
+- `moca_mesh_table_t` and `moca_GetFullMeshRates` — the full mesh `PHY` rate table between nodes.
 
-**Exclusion of Dynamic Info Structure Definition:** `moca_dynamic_info_t`, the dynamic interface
-information (status, last change, bandwidth maxima and the rest), is not declared.
-`moca_IfGetDynamicInfo` remains declared but cannot be used, because its out-parameter type is
-missing; a caller that supports both build variants compiles its dynamic-information path under the
-header's `#ifndef MOCA_VAR` guard.
-
-**Exclusion of MoCA Mesh Table Definition and Function:** `moca_mesh_table_t` and
-`moca_GetFullMeshRates`, which provide the full mesh `PHY` rate table between nodes, are not
-available.
+The `moca_IfGetDynamicInfo` declaration sits outside every `MOCA_VAR` guard and names
+`moca_dynamic_info_t`, so with `MOCA_VAR` defined the shipped `moca_hal.h` is ill-formed:
+compilation fails at that declaration inside the header, and guarding caller code under
+`#ifndef MOCA_VAR` does not repair it. The usable build is the one in which `MOCA_VAR` is not
+defined, which declares all 21 functions and their types.
 
 ## Interface API Documentation
 
@@ -330,12 +333,11 @@ process ("State Diagram").
 
 #### Object Lifecycles
 
-- **Creation:** The MoCA HAL creates no objects. The caller allocates the data structures, such as
-  `moca_cfg_t` and `moca_stats_t`, that receive information from the HAL.
+- **Creation and Destruction:** The MoCA HAL creates and destroys no objects; every structure
+  its functions read or fill is caller-owned, as "Memory Model" sets out.
 - **Usage:** The HAL's functions (`moca_GetIfConfig`, `moca_IfGetDynamicInfo` and the others)
   populate those structures, and the caller uses them to configure the interface, monitor its status
   and gather statistics.
-- **Destruction:** The caller releases the structures once it no longer needs them.
 - **Unique Identifiers:** `ifIndex` (`ULONG`) identifies a MoCA interface: 0 for a single interface,
   1 to 256 where several are present. The five `ACA` functions take the same index as
   `interfaceIndex` (`int`).
@@ -437,7 +439,7 @@ list — is carried by the Doxygen block on each declaration in `moca_hal.h`, un
 | API | Returns | Purpose |
 | --- | --- | --- |
 | `moca_IfGetStaticInfo` | `INT` status | Reads properties that do not change while the interface is up: name, MAC address, firmware version, maximum bit rate, highest supported MoCA version and capability masks. |
-| `moca_IfGetDynamicInfo` | `INT` status | Reads live interface and network state: link status, last change, operating frequency, `NC` identity, connected client count and link uptime. Unusable in a build that defines `MOCA_VAR`, which removes its out-parameter type. |
+| `moca_IfGetDynamicInfo` | `INT` status | Reads live interface and network state: link status, last change, operating frequency, `NC` identity, connected client count and link uptime. Declared outside the `MOCA_VAR` guard that excludes its out-parameter type; see "Platform or Product Customization". |
 
 **Statistics and counters:**
 
@@ -533,27 +535,28 @@ sequenceDiagram
 
 ### State Diagram
 
-Two things carry state: the `ACA` run, read from `moca_aca_stat_t`, and the interface itself, read
-from the `Status` member of `moca_dynamic_info_t`. The interface defines the values each can report
-but no transitions between them, so the diagram shows the value sets without edges.
-
-`moca_aca_stat_t::stat` is a plain `INT` reporting `0` `SUCCESS`, `1` `FAIL_BADCHANNEL`, `2`
-`FAIL_NOEVMPROBE`, `3` `FAIL` or `4` `IN_PROGRESS`; `ACATrapCompleted` is `TRUE` once the power
-profile is ready to read.
+The `ACA` run follows the idle, running and completed cycle below. `moca_getIfAcaStatus` reports
+its condition in the `stat` member of `moca_aca_stat_t`, a plain `INT`: `0` `SUCCESS`, `1`
+`FAIL_BADCHANNEL`, `2` `FAIL_NOEVMPROBE`, `3` `FAIL` or `4` `IN_PROGRESS`. Its `ACATrapCompleted`
+member is `TRUE` once the power profile is ready to read.
 
 ```mermaid
 stateDiagram-v2
-    state "ACA run status reported in moca_aca_stat_t::stat" as aca {
-        state "0 - SUCCESS" as s0
-        state "1 - FAIL_BADCHANNEL" as s1
-        state "2 - FAIL_NOEVMPROBE" as s2
-        state "3 - FAIL" as s3
-        state "4 - IN_PROGRESS" as s4
+    state "No ACA run active" as idle
+    state "Run in progress - stat 4 IN_PROGRESS" as running
+    state "Run completed" as done {
+        state "stat 0 - SUCCESS" as s0
+        state "stat 1 - FAIL_BADCHANNEL" as s1
+        state "stat 2 - FAIL_NOEVMPROBE" as s2
+        state "stat 3 - FAIL" as s3
     }
-    state "Power-profile readiness reported in moca_aca_stat_t::ACATrapCompleted" as trap {
-        state "FALSE - the power profile is not ready to read" as t0
-        state "TRUE - the power profile is ready to read" as t1
-    }
+    [*] --> idle
+    idle --> idle: moca_setIfAcaConfig with ACAStart FALSE
+    idle --> running: moca_setIfAcaConfig with ACAStart TRUE
+    running --> running: moca_setIfAcaConfig returns STATUS_INPROGRESS
+    running --> done: run ends, reported by moca_getIfAcaStatus
+    running --> idle: moca_cancelIfAca
+    done --> running: moca_setIfAcaConfig with ACAStart TRUE
 ```
 
 Each `ACA` operation has this documented effect when it returns `STATUS_SUCCESS`, unless stated
@@ -561,7 +564,7 @@ otherwise:
 
 | Operation | Documented effect |
 | --- | --- |
-| `moca_setIfAcaConfig` with `ACAStart` `TRUE` | The configuration is accepted and the run begins; `moca_getIfAcaStatus` reports its progress, and polling is how the caller learns that it has finished. |
+| `moca_setIfAcaConfig` with `ACAStart` `TRUE` | The configuration is accepted and the run begins; `moca_getIfAcaStatus` reports its progress. |
 | `moca_setIfAcaConfig` with `ACAStart` `FALSE` | The configuration is recorded and no run begins. |
 | `moca_setIfAcaConfig` while a run is active | No new run starts and the call returns `STATUS_INPROGRESS`; "Internal Error Handling" explains how to tell it from `STATUS_FAILURE`. After any other failure, the caller reads the configuration back with `moca_getIfAcaConfig`. |
 | `moca_getIfAcaConfig` | Reads the parameters currently set, in any `ACA` condition, and changes nothing. `ACAStart` reflects the value last set, not whether a run is active. |
@@ -569,12 +572,9 @@ otherwise:
 | `moca_getIfAcaStatus` | Reads `stat`, the configuration used, `RxPower`, `ACAPowProfile` and `ACATrapCompleted` for an ongoing or completed run. Success means the read succeeded, not the run. |
 | `moca_getIfScmod` | Reads the `SCMOD` statistics of a completed run into the first `*pnumOfEntries` entries of the caller's array. The caller confirms completion with `moca_getIfAcaStatus` first. |
 
-A caller treats every reading as a current observation: it learns the run's condition by calling
-`moca_getIfAcaStatus` again, and does not infer a sequence from successive readings.
-
-The seven `moca_if_status_t` values reported through `Status` are likewise current observations: a
-caller reads the current value and does not assume an ordering between values. `LastChange`
-records when the link status last changed.
+The seven `moca_if_status_t` values reported through the `Status` member of `moca_dynamic_info_t`
+are current observations with no ordering a caller may assume; `LastChange` records when the link
+status last changed.
 
 ## Source References
 
