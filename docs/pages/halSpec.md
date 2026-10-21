@@ -20,7 +20,6 @@
 - `PQoS` \- Priority Quality of Service
 - `RDK-B` \- Reference Design Kit for Broadband Devices
 - `SCMOD` \- Subcarrier Modulation
-- `SLA` \- Service Level Agreement
 
 ## Description
 
@@ -43,27 +42,27 @@ that contract as a shared library.
 
 For a caller, the interface covers five things:
 
-- **Interface configuration** — read and write the frequency mask, channel scanning, privacy
+- **Interface configuration:** read and write the frequency mask, channel scanning, privacy
   passphrase, power limits and bandwidth thresholds of a MoCA interface.
-- **Interface information** — static properties that do not change while the interface is up
+- **Interface information:** static properties that do not change while the interface is up
   (firmware version, MAC address, capability masks) and dynamic properties that do (link status,
   operating frequency, `NC` node identity, connected client count).
-- **Statistics and counters** — network-layer, MAC-layer, aggregate and `PQoS` flow statistics, the
+- **Statistics and counters:** network-layer, MAC-layer, aggregate and `PQoS` flow statistics, the
   full mesh `PHY` rate table, and the module reset count.
-- **Associated devices** — enumerate the nodes on the MoCA network, and receive an asynchronous
+- **Associated devices:** enumerate the nodes on the MoCA network, and receive an asynchronous
   notification when one joins or leaves.
-- **Automatic Channel Adaptation** — configure, start, cancel and read back an `ACA` run, plus the
+- **Automatic Channel Adaptation:** configure, start, cancel and read back an `ACA` run, plus the
   `SCMOD` statistics it produces.
 
 ## Optional Components
 
 The following parts of the interface are optional; every other part is mandatory.
 
-- **The `MOCA_VAR`-conditional surface.** `moca_GetFullMeshRates`, the `moca_mesh_table_t` structure
+- **The `MOCA_VAR`-conditional surface:** `moca_GetFullMeshRates`, the `moca_mesh_table_t` structure
   it fills, `moca_if_status_t` and `moca_dynamic_info_t` are declared only when `MOCA_VAR` is not
-  defined, the only build in which the shipped header compiles ("Platform or Product
-  Customization").
-- **The associated-device notification callback.** A caller that polls `moca_GetNumAssociatedDevices`
+  defined, the only build in which the shipped header compiles
+  (`Platform or Product Customization`).
+- **The associated-device notification callback:** A caller that polls `moca_GetNumAssociatedDevices`
   and `moca_GetAssociatedDevices` need not register one with
   `moca_associatedDevice_callback_register`; a caller that does receives node join and leave events
   asynchronously.
@@ -75,7 +74,7 @@ will result in undefined behaviour in the calling middleware.
 
 ### Initialization and Startup
 
-**This interface has no initialization or teardown call, session or handle.** The vendor brings the
+**This interface has no initialization or teardown call, session or handle:** The vendor brings the
 MoCA hardware and software into a usable state in its own start-up path. A caller's normal bring-up
 order is then:
 
@@ -104,7 +103,7 @@ when the vendor software terminates or closes its connection to the HAL.
 This interface is not inherently required to be thread-safe. It is the responsibility of the caller
 to ensure that all interactions with the APIs are properly synchronized: concurrent calls from more
 than one thread, and state shared with the notification callback, must be serialized by the caller.
-"Asynchronous Notification Model" states the obligations on the callback itself.
+`Asynchronous Notification Model` states the obligations on the callback itself.
 
 ### Process Model
 
@@ -118,7 +117,7 @@ conditions, and maintain the overall stability and reliability of the system.
 The caller owns the storage it passes to this interface's functions. Every function that produces
 data writes it into storage the caller supplies; no function returns storage the caller must free,
 and the interface has no allocator or release function. The record a notification callback receives
-falls outside that ownership and is handled as "Caller Responsibilities" sets out.
+falls outside that ownership and is handled as `Caller Responsibilities` sets out.
 
 #### Caller Responsibilities
 
@@ -193,14 +192,14 @@ one of these codes.
 | Code | Value | Meaning and caller action |
 | --- | --- | --- |
 | `STATUS_SUCCESS` | `0` | The operation succeeded and any output has been populated. |
-| `STATUS_FAILURE` | `-1` | The operation failed, with no reason attached. Retry, fall back or report the failure; the cause is recorded in the vendor log described under "Logging and debugging requirements". |
-| `STATUS_NOT_AVAILABLE` | `-2` | The requested value or capability is not available. |
+| `STATUS_FAILURE` | `-1` | The operation failed, with no reason attached. Retry, fall back or report the failure; the cause is recorded in the vendor log described under `Logging and debugging requirements`. |
+| `STATUS_NOT_AVAILABLE` | `-2` | The requested value or capability is not available. Treat it as a failure and do not read the outputs. |
 | `STATUS_INPROGRESS` | `-1` | `ACA` only: a run is already in progress and no new one was started. Poll `moca_getIfAcaStatus` or cancel with `moca_cancelIfAca` rather than retrying immediately. |
 | `STATUS_NO_NODE` | `-2` | `ACA` only: the specified node does not exist. Re-read the node set with `moca_GetAssociatedDevices` before retrying. |
 | `STATUS_INVALID_PROBE` | `-3` | `ACA` only: invalid probe type. Correct the call to use one of the two `PROBE_TYPE` members. |
 | `STATUS_INVALID_CHAN` | `-4` | `ACA` only: invalid channel. Correct the channel before retrying. |
 
-**Two pairs of codes share a value.** `STATUS_INPROGRESS` equals `STATUS_FAILURE` (`-1`) and
+**Two pairs of codes share a value:** `STATUS_INPROGRESS` equals `STATUS_FAILURE` (`-1`) and
 `STATUS_NO_NODE` equals `STATUS_NOT_AVAILABLE` (`-2`). When `moca_setIfAcaConfig` returns `-1`, read
 `moca_getIfAcaStatus` and its `stat` member to tell a run already in progress from a failure.
 
@@ -225,18 +224,18 @@ identifying, debugging, and understanding the functional flow of the system. Log
 `printf` is discouraged unless `syslog` is not available. Log output is written to the
 `moca_vendor_hal.log` file in the `/var/tmp/` or `/rdklogs/logs/` directory.
 
-Each entry carries a timestamp, a log level and a message. The log levels, as defined by the Linux
-standard logging system and in descending order of severity, are **FATAL**, **ERROR**, **WARNING**,
-**NOTICE**, **INFO**, **DEBUG** and **TRACE**. Because `STATUS_FAILURE` carries no reason, an
-**ERROR** entry identifies the operation that failed and why.
+Log levels follow the Linux standard logging system, in descending order of severity: `FATAL`,
+`ERROR`, `WARNING`, `NOTICE`, `INFO`, `DEBUG` and `TRACE`. Each log entry carries a timestamp, the
+log level and a message describing the event or condition. Because `STATUS_FAILURE` carries no
+reason, an `ERROR` entry identifies the operation that failed and why.
 
 Implementations must not log credentials, secrets, security-sensitive information, or other sensitive data.
-This applies at every log level, including **DEBUG** and **TRACE**, and to any trace buffer,
+This applies at every log level, including `DEBUG` and `TRACE`, and to any trace buffer,
 diagnostic dump or crash report the implementation produces.
 
 ### Memory and performance requirements
 
-Memory ownership for the caller and the implementation is set out in "Memory Model". The largest
+Memory ownership for the caller and the implementation is set out in `Memory Model`. The largest
 fixed-size types a caller allocates are `moca_scmod_stat_t` (three 512-byte subcarrier arrays per
 entry), `moca_aca_stat_t` (a 512-element power profile), and `moca_cfg_t` and `moca_static_info_t`
 (several 128-byte frequency masks each). Array-returning calls are bounded by `kMoca_MaxCpeList`
@@ -244,29 +243,18 @@ entry), `moca_aca_stat_t` (a 512-element power profile), and `moca_cfg_t` and `m
 
 ### Quality Control
 
-To ensure the highest quality and reliability, it is strongly recommended that third-party quality
-assurance tools like `Coverity`, `Black Duck`, and `Valgrind` be employed to thoroughly analyze the
-implementation. The goal is to detect and resolve potential issues such as memory leaks, memory
-corruption, or other defects before deployment.
+An implementation should pass analysis with third-party tools such as `Coverity`, `Black Duck` and
+`Valgrind` without reported issues. Neither the HAL implementation nor the vendor software beneath it
+may introduce memory leaks or memory corruption.
 
-Furthermore, both the HAL wrapper and any third-party software interacting with it must prioritize
-robust memory management practices. This includes meticulous allocation, deallocation, and error
-handling to guarantee a stable and leak-free operation.
-
-**Keeping this document accurate.** Any change to a file listed under "Source References" obliges a
-review of this document. A change to `include/moca_hal.h` obliges a review of "Data Structures and
-Defines", "API Surface", "Sequence Diagram" and "State Diagram"; a change to the generator pin or the
-Doxygen parameters in `docs/generate_docs.sh` obliges a review of "Variability Management". The
-review is raised with the repository maintainers through the process in `CONTRIBUTING.md`: raise an
-issue, then open a pull request for team review.
+Any change to a file listed under `Source References` obliges a review of this document by the
+repository maintainers, through the issue and pull-request process `CONTRIBUTING.md` describes.
 
 ### Licensing
 
-MoCA HAL implementation is expected to be released under the Apache License 2.0.
-
-The interface definition in this repository is itself licensed under Apache License 2.0; the full
-text is carried in `LICENSE` and the attribution notice in `NOTICE`, both listed under "Source
-References".
+The interface definition is licensed under the Apache License 2.0, with the full text in `LICENSE`
+and the attribution notice in `NOTICE`. An implementation of this interface is expected to be
+released under the Apache License 2.0.
 
 ### Build Requirements
 
@@ -276,18 +264,15 @@ compiler and build options are those of the vendor's own recipe.
 
 ### Variability Management
 
-The role of adjusting the interface, guided by versioning, rests solely within architecture
-requirements. Thereafter, vendors are obliged to align their implementation with a designated
-version of the interface. As per Service Level Agreement (`SLA`) terms, they may transition to newer
-versions based on demand needs.
+Changes to the interface are controlled by versioning. Vendors implement a designated version of the
+interface and move to later versions as their service agreements require. Each interface version
+follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html), and vendor code complies
+with a specific version.
 
-Each API interface will be versioned using [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html),
-and the vendor code will comply with a specific version of the interface.
+`MOCA_VAR` is the single compile-time flag that changes this interface;
+`Platform or Product Customization` states what it guards and which build is usable.
 
-`MOCA_VAR` is the single compile-time flag that changes this interface; "Platform or Product
-Customization" states what it guards and which build is usable.
-
-**The generated documentation describes the build in which `MOCA_VAR` is not defined.**
+**The generated documentation describes the build in which `MOCA_VAR` is not defined:**
 `docs/generate_docs.sh` passes ``DOXYGEN_EXTRA_PARAMS="PREDEFINED='MOCA_VAR=0'"``, but the pinned
 generator, `1.2.0`, does not use that variable and leaves `PREDEFINED` empty. The generated reference
 therefore includes the four `MOCA_VAR`-conditional symbols, as does every build in which the shipped
@@ -327,13 +312,13 @@ which the caller configures, monitors and troubleshoots the MoCA interface.
 
 Every call is a synchronous getter or setter addressed to an interface index; results are written
 into caller-supplied storage and status is returned as the return value. The exceptions are the
-associated-device notification ("Asynchronous Notification Model") and the long-running `ACA`
-process ("State Diagram").
+associated-device notification (`Asynchronous Notification Model`) and the long-running `ACA`
+process (`State Diagram`).
 
 #### Object Lifecycles
 
-- **Creation and Destruction:** The MoCA HAL creates and destroys no objects; every structure
-  its functions read or fill is caller-owned, as "Memory Model" sets out.
+- **Creation and destruction:** The MoCA HAL creates and destroys no objects; every structure
+  its functions read or fill is caller-owned, as `Memory Model` sets out.
 - **Usage:** The HAL's functions (`moca_GetIfConfig`, `moca_IfGetDynamicInfo` and the others)
   populate those structures, and the caller uses them to configure the interface, monitor its status
   and gather statistics.
@@ -352,23 +337,23 @@ process ("State Diagram").
 - **Ordering of `ACA` calls:** `moca_setIfAcaConfig` precedes `moca_getIfAcaStatus` and `moca_getIfScmod`. The
   status is meaningful once a run has been configured or started, and the `SCMOD` statistics once a
   run has completed.
-- **Other Methods:** the remaining functions can be called in any order, provided the caller
-  serializes them as "Threading Model" requires.
+- **Other methods:** the remaining functions can be called in any order, provided the caller
+  serializes them as `Threading Model` requires.
 
 #### State-Dependent Behavior
 
-- **Interface Status:** functions such as `moca_IfGetDynamicInfo` and `moca_IfGetStats` return
+- **Interface status:** functions such as `moca_IfGetDynamicInfo` and `moca_IfGetStats` return
   different information depending on the current state of the MoCA interface (Up, Down, Dormant and
   the others).
-- **The `ACA` Process:** the effect of the `ACA` calls depends on whether a run is active;
-  "State Diagram" gives the documented effect of each `ACA` operation.
+- **The `ACA` process:** the effect of the `ACA` calls depends on whether a run is active;
+  `State Diagram` gives the documented effect of each `ACA` operation.
 
 ### Data Structures and Defines
 
 Every type below is declared in `moca_hal.h` under the `MOCA_HAL_TYPES` Doxygen group, and the
 comment on each member describes that field.
 
-**Enumerations.** There are exactly two in the active interface.
+**Enumerations:** There are exactly two in the active interface.
 
 | Type | What it represents |
 | --- | --- |
@@ -377,9 +362,9 @@ comment on each member describes that field.
 
 The header also contains an `ACA_STATUS` enumeration inside a disabled conditional block. It is not
 part of the interface and cannot be referenced from calling code; `ACA` results are read from the
-`stat` member of `moca_aca_stat_t`, whose values "State Diagram" lists.
+`stat` member of `moca_aca_stat_t`, whose values `State Diagram` lists.
 
-**Structures.** All fourteen are `typedef`-ed structures passed by pointer.
+**Structures:** All fourteen are `typedef`-ed structures passed by pointer.
 
 | Type | What it represents |
 | --- | --- |
@@ -398,14 +383,14 @@ part of the interface and cannot be referenced from calling code; `ACA` results 
 | `moca_aca_cfg_t` | The `ACA` request: node ID, probe type, channel, a bitmask of reporting nodes, and the `ACAStart` flag that decides whether the call configures only or also starts the run. |
 | `moca_aca_stat_t` | The `ACA` result: the configuration used, the `stat` code, total received power, a 512-element per-channel power profile, and the `ACATrapCompleted` flag indicating that the profile is ready. |
 
-**Callback type.** One function pointer type is declared, and it is installed by exactly one function.
+**Callback type:** One function pointer type is declared, and it is installed by exactly one function.
 
 | Type | Installed by | What it represents |
 | --- | --- | --- |
-| `moca_associatedDevice_callback` | `moca_associatedDevice_callback_register` | `INT (*)(ULONG ifIndex, moca_associated_device_t *moca_dev)` — invoked when a MoCA client is activated or deactivated on the network. See "Asynchronous Notification Model". |
+| `moca_associatedDevice_callback` | `moca_associatedDevice_callback_register` | `INT (*)(ULONG ifIndex, moca_associated_device_t *moca_dev)` — invoked when a MoCA client is activated or deactivated on the network. See `Asynchronous Notification Model`. |
 
-**Macros a caller must interpret.** The `STATUS_*` return codes are listed under "Internal Error
-Handling".
+**Macros a caller must interpret:** The `STATUS_*` return codes are listed under
+`Internal Error Handling`.
 
 | Macro | Value | What it represents |
 | --- | --- | --- |
@@ -438,7 +423,7 @@ list — is carried by the Doxygen block on each declaration in `moca_hal.h`, un
 | API | Returns | Purpose |
 | --- | --- | --- |
 | `moca_IfGetStaticInfo` | `INT` status | Reads properties that do not change while the interface is up: name, MAC address, firmware version, maximum bit rate, highest supported MoCA version and capability masks. |
-| `moca_IfGetDynamicInfo` | `INT` status | Reads live interface and network state: link status, last change, operating frequency, `NC` identity, connected client count and link uptime. Declared outside the `MOCA_VAR` guard that excludes its out-parameter type; see "Platform or Product Customization". |
+| `moca_IfGetDynamicInfo` | `INT` status | Reads live interface and network state: link status, last change, operating frequency, `NC` identity, connected client count and link uptime. Declared outside the `MOCA_VAR` guard that excludes its out-parameter type; see `Platform or Product Customization`. |
 
 **Statistics and counters:**
 
@@ -565,7 +550,7 @@ otherwise:
 | --- | --- |
 | `moca_setIfAcaConfig` with `ACAStart` `TRUE` | The configuration is accepted and the run begins; `moca_getIfAcaStatus` reports its progress. |
 | `moca_setIfAcaConfig` with `ACAStart` `FALSE` | The configuration is recorded and no run begins. |
-| `moca_setIfAcaConfig` while a run is active | No new run starts and the call returns `STATUS_INPROGRESS`; "Internal Error Handling" explains how to tell it from `STATUS_FAILURE`. After any other failure, the caller reads the configuration back with `moca_getIfAcaConfig`. |
+| `moca_setIfAcaConfig` while a run is active | No new run starts and the call returns `STATUS_INPROGRESS`; `Internal Error Handling` explains how to tell it from `STATUS_FAILURE`. After any other failure, the caller reads the configuration back with `moca_getIfAcaConfig`. |
 | `moca_getIfAcaConfig` | Reads the parameters currently set, in any `ACA` condition, and changes nothing. `ACAStart` reflects the value last set, not whether a run is active. |
 | `moca_cancelIfAca` | The cancellation is accepted, whether or not a run was active. A caller that needs to know the run has stopped reads `moca_getIfAcaStatus` until `stat` is no longer `4`, and does not treat later results as those of a completed run. |
 | `moca_getIfAcaStatus` | Reads `stat`, the configuration used, `RxPower`, `ACAPowProfile` and `ACATrapCompleted` for an ongoing or completed run. Success means the read succeeded, not the run. |
@@ -577,11 +562,11 @@ status last changed.
 
 ## Source References
 
-- [rdkcentral/rdkb-halif-moca/include/moca_hal.h](https://github.com/rdkcentral/rdkb-halif-moca/blob/develop/include/moca_hal.h) — the interface header: declarations, data types, return codes and per-API Doxygen documentation.
-- [rdkcentral/rdkb-halif-moca/CHANGELOG.md](https://github.com/rdkcentral/rdkb-halif-moca/blob/develop/CHANGELOG.md) — the release history behind "Version History".
-- [rdkcentral/rdkb-halif-moca/docs/generate_docs.sh](https://github.com/rdkcentral/rdkb-halif-moca/blob/develop/docs/generate_docs.sh) — the documentation build script, its generator pin and its `MOCA_VAR` setting.
-- [rdkcentral/rdkb-halif-moca/CONTRIBUTING.md](https://github.com/rdkcentral/rdkb-halif-moca/blob/develop/CONTRIBUTING.md) — the contribution and review process.
-- [rdkcentral/rdkb-halif-moca/LICENSE](https://github.com/rdkcentral/rdkb-halif-moca/blob/develop/LICENSE) — the Apache License 2.0 text.
-- [rdkcentral/rdkb-halif-moca/NOTICE](https://github.com/rdkcentral/rdkb-halif-moca/blob/develop/NOTICE) — the attribution notice.
-- [rdkcentral/hal-doxygen/Makefile](https://github.com/rdkcentral/hal-doxygen/blob/1.2.0/Makefile) — the documentation generator's build at the pinned tag `1.2.0`.
-- [rdkcentral/hal-doxygen/Doxyfile.cfg](https://github.com/rdkcentral/hal-doxygen/blob/1.2.0/Doxyfile.cfg) — the documentation generator's Doxygen configuration at the pinned tag `1.2.0`.
+- [rdkcentral/rdkb-halif-moca/include/moca_hal.h](https://github.com/rdkcentral/rdkb-halif-moca/blob/develop/include/moca_hal.h) — the interface header: declarations, data types, return codes and per-API Doxygen documentation
+- [rdkcentral/rdkb-halif-moca/CHANGELOG.md](https://github.com/rdkcentral/rdkb-halif-moca/blob/develop/CHANGELOG.md) — the release history behind `Version History`
+- [rdkcentral/rdkb-halif-moca/docs/generate_docs.sh](https://github.com/rdkcentral/rdkb-halif-moca/blob/develop/docs/generate_docs.sh) — the documentation build script, its generator pin and its `MOCA_VAR` setting
+- [rdkcentral/rdkb-halif-moca/CONTRIBUTING.md](https://github.com/rdkcentral/rdkb-halif-moca/blob/develop/CONTRIBUTING.md) — the contribution and review process
+- [rdkcentral/rdkb-halif-moca/LICENSE](https://github.com/rdkcentral/rdkb-halif-moca/blob/develop/LICENSE) — the Apache License 2.0 text
+- [rdkcentral/rdkb-halif-moca/NOTICE](https://github.com/rdkcentral/rdkb-halif-moca/blob/develop/NOTICE) — the attribution notice
+- [rdkcentral/hal-doxygen/Makefile](https://github.com/rdkcentral/hal-doxygen/blob/1.2.0/Makefile) — the documentation generator's build at the pinned tag `1.2.0`
+- [rdkcentral/hal-doxygen/Doxyfile.cfg](https://github.com/rdkcentral/hal-doxygen/blob/1.2.0/Doxyfile.cfg) — the documentation generator's Doxygen configuration at the pinned tag `1.2.0`
