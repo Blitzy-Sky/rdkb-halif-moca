@@ -176,7 +176,7 @@ synchronous.
   through lack of response.
 - **Start-up:** the non-blocking requirement applies once the vendor MoCA subsystem is ready. Before
   then a call may not return promptly, so the caller bounds its first calls.
-- **`ACA`:** an `ACA` run is long-running, but no call waits for it: `moca_setIfAcaConfig` starts the
+- **Automatic Channel Adaptation:** an `ACA` run is long-running, but no call waits for it: `moca_setIfAcaConfig` starts the
   run and returns, and the caller polls `moca_getIfAcaStatus` for completion.
 
 ### Internal Error Handling
@@ -348,7 +348,7 @@ process ("State Diagram").
   back; a structure populated from scratch overwrites every member the caller did not set.
 - **Sizing before enumeration:** `moca_GetNumAssociatedDevices` is called before
   `moca_GetAssociatedDevices` so that the caller can size the array it supplies.
-- **`ACA` ordering:** `moca_setIfAcaConfig` precedes `moca_getIfAcaStatus` and `moca_getIfScmod`. The
+- **Ordering of `ACA` calls:** `moca_setIfAcaConfig` precedes `moca_getIfAcaStatus` and `moca_getIfScmod`. The
   status is meaningful once a run has been configured or started, and the `SCMOD` statistics once a
   run has completed.
 - **Other Methods:** the remaining functions can be called in any order, provided the caller
@@ -359,7 +359,7 @@ process ("State Diagram").
 - **Interface Status:** functions such as `moca_IfGetDynamicInfo` and `moca_IfGetStats` return
   different information depending on the current state of the MoCA interface (Up, Down, Dormant and
   the others).
-- **`ACA` Process:** the effect of the `ACA` calls depends on whether a run is active;
+- **The `ACA` Process:** the effect of the `ACA` calls depends on whether a run is active;
   "State Diagram" gives the documented effect of each `ACA` operation.
 
 ### Data Structures and Defines
