@@ -27,10 +27,9 @@
 The diagram below shows the high-level software architecture of the MoCA HAL module stack.
 
 ```mermaid
-flowchart TD;
-    Caller["CcspMoCA"] <-->
-    HAL["MoCA HAL - libhal_moca"] <-->
-    Vendor["Vendor Software"]
+flowchart TD
+    Caller["CcspMoCA"] <--> HAL["MoCA HAL - moca_hal.h"]
+    HAL <--> Vendor["Vendor Software"]
 ```
 
 The MoCA HAL provides a standardized interface through which RDK-B middleware accesses and controls
@@ -53,7 +52,7 @@ For a caller, the interface covers five things:
   full mesh `PHY` rate table, and the module reset count.
 - **Associated devices** — enumerate the nodes on the MoCA network, and receive an asynchronous
   notification when one joins or leaves.
-- `ACA` — configure, start, cancel and read back an Automatic Channel Adaptation run, plus the
+- **Automatic Channel Adaptation** — configure, start, cancel and read back an `ACA` run, plus the
   `SCMOD` statistics it produces.
 
 ## Optional Components
@@ -460,7 +459,7 @@ list — is carried by the Doxygen block on each declaration in `moca_hal.h`, un
 | `moca_GetAssociatedDevices` | `INT` status | Reads a `moca_associated_device_t` record for every associated node — MAC address, node ID, `PHY` rates, power levels, capability flags and the `Active` flag. |
 | `moca_associatedDevice_callback_register` | `void` | Installs the callback invoked when a MoCA client is activated or deactivated. |
 
-`CPE` **and utility:**
+**Customer Premises Equipment and utility:**
 
 | API | Returns | Purpose |
 | --- | --- | --- |
@@ -468,7 +467,7 @@ list — is carried by the Doxygen block on each declaration in `moca_hal.h`, un
 | `moca_FreqMaskToValue` | `INT` frequency value | Converts a frequency bit mask to the corresponding frequency value. The mask interpretation and the valid output range are vendor-specific, and the input buffer should be at least 16 bytes. |
 | `moca_HardwareEquipped` | `BOOL` | Reports whether MoCA hardware is present and correctly configured, as `TRUE` or `FALSE`. |
 
-`ACA` **— Automatic Channel Adaptation:**
+**Automatic Channel Adaptation:**
 
 | API | Returns | Purpose |
 | --- | --- | --- |
