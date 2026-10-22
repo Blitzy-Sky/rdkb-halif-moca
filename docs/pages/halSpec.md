@@ -476,41 +476,41 @@ sequenceDiagram
 
     Caller->>HAL: moca_HardwareEquipped()
     HAL->>Vendor: check hardware presence
-    Vendor->>HAL: hardware present
-    HAL->>Caller: TRUE
+    Vendor-->>HAL: hardware present
+    HAL-->>Caller: TRUE
 
     Caller->>HAL: moca_IfGetStaticInfo()
     HAL->>Vendor: read fixed interface properties
-    Vendor->>HAL: name, MAC, firmware, capabilities
-    HAL->>Caller: moca_IfGetStaticInfo() return
+    Vendor-->>HAL: name, MAC, firmware, capabilities
+    HAL-->>Caller: moca_IfGetStaticInfo() return
 
     Caller->>HAL: moca_GetIfConfig()
     HAL->>Vendor: read current configuration
-    Vendor->>HAL: configuration parameters
-    HAL->>Caller: moca_GetIfConfig() return
+    Vendor-->>HAL: configuration parameters
+    HAL-->>Caller: moca_GetIfConfig() return
 
     Caller->>HAL: moca_SetIfConfig()
     HAL->>Vendor: apply configuration
-    Vendor->>HAL: applied
-    HAL->>Caller: moca_SetIfConfig() return
+    Vendor-->>HAL: applied
+    HAL-->>Caller: moca_SetIfConfig() return
 
     Caller->>HAL: moca_associatedDevice_callback_register()
-    HAL->>Caller: void
+    HAL-->>Caller: void
 
     Caller->>HAL: moca_IfGetDynamicInfo()
     HAL->>Vendor: read link and network state
-    Vendor->>HAL: status, frequency, node identity
-    HAL->>Caller: moca_IfGetDynamicInfo() return
+    Vendor-->>HAL: status, frequency, node identity
+    HAL-->>Caller: moca_IfGetDynamicInfo() return
 
     Caller->>HAL: moca_GetNumAssociatedDevices()
     HAL->>Vendor: count nodes on the network
-    Vendor->>HAL: node count
-    HAL->>Caller: moca_GetNumAssociatedDevices() return
+    Vendor-->>HAL: node count
+    HAL-->>Caller: moca_GetNumAssociatedDevices() return
 
     Caller->>HAL: moca_GetAssociatedDevices()
     HAL->>Vendor: read per-node records
-    Vendor->>HAL: node records
-    HAL->>Caller: moca_GetAssociatedDevices() return
+    Vendor-->>HAL: node records
+    HAL-->>Caller: moca_GetAssociatedDevices() return
 
     Note over Vendor: a node joins or leaves the network
     Vendor->>HAL: associated device event
@@ -527,12 +527,12 @@ member is `TRUE` once the power profile is ready to read.
 ```mermaid
 stateDiagram-v2
     state "No ACA run active" as idle
-    state "Run in progress - stat 4 IN_PROGRESS" as running
+    state "IN_PROGRESS=4" as running
     state "Run completed" as done {
-        state "stat 0 - SUCCESS" as s0
-        state "stat 1 - FAIL_BADCHANNEL" as s1
-        state "stat 2 - FAIL_NOEVMPROBE" as s2
-        state "stat 3 - FAIL" as s3
+        state "SUCCESS=0" as s0
+        state "FAIL_BADCHANNEL=1" as s1
+        state "FAIL_NOEVMPROBE=2" as s2
+        state "FAIL=3" as s3
     }
     [*] --> idle
     idle --> idle: moca_setIfAcaConfig with ACAStart FALSE
