@@ -1,1 +1,1 @@
-docs/pages/MoCAHalSpec.md
+docs/pages/halSpec.md
